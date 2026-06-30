@@ -23,6 +23,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollSpeed, setScrollSpeed] = useState(0);
 
   const mainRef        = useRef<HTMLDivElement>(null);
   const heroRef        = useRef<HTMLDivElement>(null);
@@ -40,7 +41,15 @@ export default function Home() {
         start: 'top top',
         end: 'bottom bottom',
         scrub: true,
-        onUpdate: (self) => setScrollProgress(self.progress),
+        onUpdate: (self) => {
+          setScrollProgress(self.progress);
+          
+          // Get velocity from GSAP (usually between -3000 and 3000)
+          // We normalize it to a 0-1 multiplier range for the 3D scene
+          const v = Math.abs(self.getVelocity());
+          const normalizedSpeed = Math.min(v / 1500, 1.5); // Cap at 1.5x boost
+          setScrollSpeed(normalizedSpeed);
+        },
       });
 
       // ── Hero: fade + lift out ──────────────────────────────────────────────
@@ -96,7 +105,7 @@ export default function Home() {
   return (
     <>
       {/* ── Fixed racing background ─── */}
-      <HyperspeedBackground />
+      <HyperspeedBackground scrollSpeed={scrollSpeed} />
 
       {/* ── Scroll runway (500vh) ─── */}
       <div
@@ -113,59 +122,68 @@ export default function Home() {
             top: 0,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
+            paddingLeft: '5%',
             overflow: 'hidden',
           }}
         >
-          <HeroSection scrollProgress={scrollProgress} />
+          <div style={{ maxWidth: '40vw' }}>
+            <HeroSection scrollProgress={scrollProgress} />
+          </div>
         </div>
 
         <div style={{ height: '30vh' }} />
 
-        {/* 02 — Car Architecture */}
+        {/* 02 — Car Architecture (Tech Stack) */}
         <div
           ref={techRef}
           style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '64px 16px',
+            justifyContent: 'flex-end',
+            paddingRight: '5%',
           }}
         >
-          <TechStackSection />
+          <div style={{ maxWidth: '40vw' }}>
+            <TechStackSection />
+          </div>
         </div>
 
         <div style={{ height: '20vh' }} />
 
-        {/* 03 — Track Record */}
+        {/* 03 — Track Record (Projects) */}
         <div
           ref={projectsRef}
           style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '64px 16px',
+            justifyContent: 'flex-start',
+            paddingLeft: '5%',
           }}
         >
-          <ProjectsSection />
+          <div style={{ maxWidth: '40vw' }}>
+            <ProjectsSection />
+          </div>
         </div>
 
         <div style={{ height: '20vh' }} />
 
-        {/* 04 — Constructor Collaborations */}
+        {/* 04 — Telemetry (Open Source) */}
         <div
           ref={openSourceRef}
           style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '64px 16px',
+            justifyContent: 'flex-end',
+            paddingRight: '5%',
           }}
         >
-          <OpenSourceSection />
+          <div style={{ maxWidth: '40vw' }}>
+            <OpenSourceSection />
+          </div>
         </div>
 
         <div style={{ height: '15vh' }} />

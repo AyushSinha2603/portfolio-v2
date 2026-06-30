@@ -9,17 +9,16 @@ interface TechCard {
 }
 
 const frontendStack: TechCard[] = [
-  { name: 'React', description: 'Component architecture & state management', proficiency: 95 },
-  { name: 'Next.js', description: 'Server-side rendering & app routing', proficiency: 90 },
-  { name: 'TypeScript', description: 'Type-safe engineering at scale', proficiency: 92 },
+  { name: 'React & Next.js', description: 'Component architecture & server-side rendering', proficiency: 92 },
+  { name: 'JavaScript & TS', description: 'Type-safe engineering at scale', proficiency: 90 },
   { name: 'Tailwind CSS', description: 'Utility-first styling & design systems', proficiency: 88 },
 ];
 
 const backendStack: TechCard[] = [
-  { name: 'Java', description: 'Enterprise-grade application development', proficiency: 90 },
-  { name: 'Spring Boot', description: 'Microservice architecture & REST APIs', proficiency: 85 },
-  { name: 'Python', description: 'Data pipelines & automation scripting', proficiency: 88 },
-  { name: 'SQL / PostgreSQL', description: 'Relational data modeling & optimization', proficiency: 85 },
+  { name: 'Java & Spring Boot', description: 'Enterprise-grade microservices & REST APIs', proficiency: 90 },
+  { name: 'Python', description: 'Machine learning & automation scripting', proficiency: 85 },
+  { name: 'SQL & PostgreSQL', description: 'Relational data modeling & optimization', proficiency: 88 },
+  { name: 'MongoDB', description: 'NoSQL document storage', proficiency: 80 },
 ];
 
 function TechCardItem({ tech }: { tech: TechCard }) {

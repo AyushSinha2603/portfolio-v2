@@ -19,42 +19,55 @@ interface Project {
 const projects: Project[] = [
   {
     position: 'P1',
-    name: 'Monaco GP // Portfolio Engine',
-    description: 'Full-stack web application with 3D rendering pipeline',
+    name: 'MailSense AI',
+    description: 'AI-powered email assistant integrating Gemini API',
     details:
-      'Engineered a scroll-driven 3D portfolio with optimized model loading and GSAP-coordinated animations. Strategic resource loading minimizes time-to-interactive.',
+      'Designed a layered backend architecture focused on secure email processing. Implemented REST APIs for workflow automation, successfully parsing 40+ emails during system evaluation.',
     metrics: [
-      { label: 'Load Time', value: '<2s' },
-      { label: 'Lighthouse', value: '95+' },
-      { label: 'Bundle', value: '-40%' },
+      { label: 'Latency', value: '<500ms' },
+      { label: 'Concurrent Req', value: '100+' },
+      { label: 'Stack', value: 'Spring Boot' },
     ],
-    tags: ['React', 'Three.js', 'GSAP', 'Next.js'],
+    tags: ['Java', 'Spring Boot', 'React', 'Gemini API'],
   },
   {
     position: 'P2',
-    name: 'Silverstone GP // Data Pipeline Architect',
-    description: 'Real-time data processing and analytics platform',
+    name: 'Sleepyhead Studios',
+    description: 'Official landing platform with dynamic game showcases',
     details:
-      'Designed high-throughput microservice architecture processing millions of daily events. Applied strategic resource management principles for optimal system allocation.',
+      'Developed and deployed using Next.js 14 and React 19. Leveraged Server Components to optimize frontend rendering performance and configured custom domains with DNS routing.',
     metrics: [
-      { label: 'Throughput', value: '10K req/s' },
-      { label: 'Latency', value: '<50ms' },
-      { label: 'Uptime', value: '99.9%' },
+      { label: 'Scroll', value: 'Lenis' },
+      { label: 'Animations', value: 'Framer Motion' },
+      { label: 'Version', value: 'Next.js 14' },
     ],
-    tags: ['Java', 'Spring Boot', 'PostgreSQL', 'Redis'],
+    tags: ['Next.js', 'React', 'Framer Motion', 'Tailwind'],
   },
   {
     position: 'P3',
-    name: 'Suzuka GP // Strategic Resource Manager',
-    description: 'Resource optimization and scheduling system',
+    name: 'Opening Forge',
+    description: 'Chess opening analysis and representation system',
     details:
-      'Built intelligent resource allocation system. Applied macro strategy optimization principles — efficiency through calculated, data-driven decision-making.',
+      'Engineered an optimized data model integrating the complete Lichess ECO dataset. Designed system workflows for FEN-indexed position generation and engine evaluation processing.',
     metrics: [
-      { label: 'Efficiency', value: '+35%' },
-      { label: 'Cost', value: '-28%' },
-      { label: 'Scale', value: '50K users' },
+      { label: 'Openings', value: '3,700+' },
+      { label: 'Dataset', value: 'Lichess ECO' },
+      { label: 'Index', value: 'FEN-based' },
     ],
-    tags: ['Python', 'FastAPI', 'SQL', 'Docker'],
+    tags: ['System Design', 'Algorithms', 'Data Modeling'],
+  },
+  {
+    position: 'P4',
+    name: 'Accident Severity Prediction',
+    description: 'Machine learning system for traffic risk assessment',
+    details:
+      'Trained and evaluated on a robust dataset of real-world traffic records. Performed data cleaning, feature engineering, and exploratory data analysis to develop predictive models.',
+    metrics: [
+      { label: 'Dataset', value: '300,000+ records' },
+      { label: 'Stack', value: 'Python' },
+      { label: 'Tools', value: 'Pandas' },
+    ],
+    tags: ['Machine Learning', 'Python', 'Pandas', 'EDA'],
   },
 ];
 

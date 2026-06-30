@@ -108,7 +108,9 @@ class HyperspeedApp {
   private lastTime = 0;
   private elapsed  = 0;
   private disposed = false;
-  private boost = 1;
+  
+  // External scroll speed injected from React
+  public scrollSpeedMultiplier = 0;
 
   constructor(container: HTMLElement, opts: HyperspeedOptions) {
     const c = opts.colors ?? {};
@@ -479,13 +481,6 @@ class HyperspeedApp {
   // ── Input ─────────────────────────────────────────────────────────────────
 
   private addListeners(container: HTMLElement) {
-    const dn = () => { this.boost = this.opts.boostSpeed; this.opts.onSpeedUp?.(); };
-    const up = () => { this.boost = 1;                   this.opts.onSlowDown?.(); };
-    container.addEventListener('mousedown',  dn);
-    container.addEventListener('mouseup',    up);
-    container.addEventListener('touchstart', dn, { passive: true });
-    container.addEventListener('touchend',   up);
-
     const onResize = () => {
       const w = container.clientWidth, h = container.clientHeight;
       this.camera.aspect = w / h;
@@ -508,13 +503,15 @@ class HyperspeedApp {
     this.elapsed += delta;
 
     const t     = this.elapsed;
-    const speed = this.opts.baseSpeed * this.boost;
+    // Base speed is 1x. Scrolling adds up to 1.5x (from the normalized page.tsx velocity)
+    const currentBoost = 1 + this.scrollSpeedMultiplier * (this.opts.boostSpeed - 1);
+    const speed = this.opts.baseSpeed * currentBoost;
 
     // Move road toward camera
     this.scrollRoad(delta, speed);
 
     // Animate streaks
-    this.updateStreaks(delta, this.boost);
+    this.updateStreaks(delta, currentBoost);
 
     // Move side sticks with road
     this.updateSideSticks(delta, speed);
@@ -529,7 +526,7 @@ class HyperspeedApp {
     this.camera.lookAt(swayX * 0.4, 1.6, -100);
 
     // FOV pulse on boost
-    const targetFov = this.boost > 1 ? this.opts.fov! + 18 : this.opts.fov!;
+    const targetFov = currentBoost > 1.1 ? this.opts.fov! + 12 * currentBoost : this.opts.fov!;
     this.camera.fov += (targetFov - this.camera.fov) * 0.06;
     this.camera.updateProjectionMatrix();
 
@@ -572,9 +569,10 @@ class HyperspeedApp {
 
 interface HyperspeedProps {
   effectOptions?: HyperspeedOptions;
+  scrollSpeed?: number;
 }
 
-export default function Hyperspeed({ effectOptions = f1RedBullPreset }: HyperspeedProps) {
+export default function Hyperspeed({ effectOptions = f1RedBullPreset, scrollSpeed = 0 }: HyperspeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef       = useRef<HyperspeedApp | null>(null);
 
@@ -590,6 +588,13 @@ export default function Hyperspeed({ effectOptions = f1RedBullPreset }: Hyperspe
     return () => { appRef.current?.dispose(); appRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Update app speed when scroll speed changes
+  useEffect(() => {
+    if (appRef.current) {
+      appRef.current.scrollSpeedMultiplier = scrollSpeed;
+    }
+  }, [scrollSpeed]);
 
   return (
     <div

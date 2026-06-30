@@ -202,25 +202,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
         <div ref={ref} id="hero" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
           {/* Huge watermark race number */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: '4%',
-              left: '4%',
-              fontFamily: 'var(--font-headline, "Space Grotesk", sans-serif)',
-              fontWeight: 800,
-              fontStyle: 'italic',
-              fontSize: 'clamp(72px, 16vw, 200px)',
-              lineHeight: 1,
-              color: 'rgba(220,0,0,0.045)',
-              userSelect: 'none',
-              pointerEvents: 'none',
-            }}
-          >
-            01
-          </div>
-
           {/* Section label */}
           <div
             style={{
@@ -263,14 +244,15 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               style={{
                 fontFamily: 'var(--font-headline, "Space Grotesk", sans-serif)',
                 fontWeight: 800,
-                fontSize: 'clamp(52px, 10vw, 100px)',
+                fontSize: 'clamp(52px, 10vw, 84px)',
                 lineHeight: 0.92,
                 letterSpacing: '-0.03em',
                 color: '#ffffff',
                 margin: 0,
+                textTransform: 'uppercase',
               }}
             >
-              AYUSH
+              AYUSH SINHA
             </h1>
 
             {/* Red accent underline */}
@@ -296,22 +278,24 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                 marginBottom: 0,
               }}
             >
-              Software Engineer
+              Software Engineer | Backend & System Design Enthusiast
             </p>
 
             {/* Tagline */}
             <p
               style={{
                 fontFamily: 'var(--font-mono, monospace)',
-                fontSize: 12,
-                letterSpacing: '0.08em',
-                color: '#4a4a4a',
-                marginTop: 10,
+                fontSize: 13,
+                letterSpacing: '0.05em',
+                color: '#888',
+                marginTop: 14,
                 marginBottom: 0,
+                lineHeight: 1.6,
               }}
             >
-              Precision-engineered software.{' '}
-              <span style={{ color: '#DC0000' }}>Zero-latency</span> execution.
+              Focused on building scalable web apps and optimizing backend systems.<br/>
+              🎓 B.Tech in Civil Engineering @ NIT Rourkela ('27)<br/>
+              🏎️ F1 fan, AoE2 strategist, amateur photographer, speed chess enthusiast.
             </p>
 
             {/* Status row */}

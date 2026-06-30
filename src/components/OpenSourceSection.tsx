@@ -12,25 +12,18 @@ interface Contribution {
 
 const contributions: Contribution[] = [
   {
-    repo: 'react-scroll-parallax',
+    repo: 'lichess-org/chess-openings',
     description:
-      'Performance optimization PR merged — reduced re-render cycles by 40%',
-    stars: '1.2K',
+      'Contributed 2 merged pull requests improving opening classification and transposition mapping for Lichess, one of the largest open-source chess platforms.',
+    stars: '1.5K',
     role: 'Contributor',
   },
   {
-    repo: 'spring-boot-starter-kit',
+    repo: 'fitztrev/rosen-score',
     description:
-      'Added async event processing module for microservice bootstrapping',
-    stars: '850',
+      'Implemented cross-platform aggregation from Lichess and Chess.com. Engineered concurrent API request handling and dynamic UI updates. (Passed CI checks; pending review).',
+    stars: '120',
     role: 'Contributor',
-  },
-  {
-    repo: 'python-data-toolkit',
-    description:
-      'Built CSV/Parquet ingestion pipeline with streaming support',
-    stars: '620',
-    role: 'Maintainer',
   },
 ];
 
