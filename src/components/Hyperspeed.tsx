@@ -100,6 +100,9 @@ class HyperspeedApp {
   // F1 Car
   private f1Car: THREE.Group | null = null;
 
+  // Shader Uniforms
+  private uniforms = { uTime: { value: 0 } };
+
   // State
   private rafId = 0;
   private lastTime = 0;
@@ -233,8 +236,40 @@ class HyperspeedApp {
 
   // ── Road: scrolling chunks ────────────────────────────────────────────────
 
-  private makeLaneMat(color: number) {
-    return new THREE.MeshBasicMaterial({ color });
+  private attachDistortion(mat: THREE.Material) {
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = this.uniforms.uTime;
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `#include <common>
+        uniform float uTime;
+        `
+      );
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        vec4 wPos = modelMatrix * vec4(position, 1.0);
+        float dz = max(0.0, -wPos.z - 10.0); // Bends start smoothly past the car
+        
+        // Loop and twisting curve math
+        float xOff = sin(dz * 0.015 + uTime * 2.5) * dz * 0.15;
+        float yOff = (cos(dz * 0.01 + uTime * 1.5) * dz * 0.15) - (dz * dz * 0.001);
+        
+        transformed.x += xOff;
+        transformed.y += yOff;
+        `
+      );
+    };
+    return mat;
+  }
+
+  private makeLaneMat(color: number, opacity = 1.0) {
+    const mat = new THREE.MeshBasicMaterial({ 
+      color, 
+      transparent: opacity < 1.0, 
+      opacity 
+    });
+    return this.attachDistortion(mat);
   }
 
   private makeRoadChunk(offsetZ: number): THREE.Group {
@@ -242,23 +277,21 @@ class HyperspeedApp {
     const group = new THREE.Group();
     group.position.z = offsetZ;
 
-    // Road surface
+    // Road surface (subdivided for smooth curve)
     const roadPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(roadWidth, CHUNK_LEN),
+      new THREE.PlaneGeometry(roadWidth, CHUNK_LEN, 1, 24).rotateX(-Math.PI / 2),
       this.makeLaneMat(colors.road)
     );
-    roadPlane.rotation.x = -Math.PI / 2;
     roadPlane.position.z = -CHUNK_LEN / 2;
     group.add(roadPlane);
 
-    // Shoulder lines (left & right edges)
+    // Shoulder lines
     const shw = 0.18;
     [-(roadWidth / 2 - shw / 2), roadWidth / 2 - shw / 2].forEach((x) => {
       const sh = new THREE.Mesh(
-        new THREE.PlaneGeometry(shw, CHUNK_LEN),
+        new THREE.PlaneGeometry(shw, CHUNK_LEN, 1, 24).rotateX(-Math.PI / 2),
         this.makeLaneMat(colors.shoulderLine)
       );
-      sh.rotation.x = -Math.PI / 2;
       sh.position.set(x, 0.005, -CHUNK_LEN / 2);
       group.add(sh);
     });
@@ -268,15 +301,14 @@ class HyperspeedApp {
     const dashLen = CHUNK_LEN / dashCount / 2;
     for (let i = 0; i < dashCount; i++) {
       const d = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.1, dashLen),
-        new THREE.MeshBasicMaterial({ color: 0x222244, transparent: true, opacity: 0.6 })
+        new THREE.PlaneGeometry(0.1, dashLen, 1, 4).rotateX(-Math.PI / 2),
+        this.makeLaneMat(0x222244, 0.6)
       );
-      d.rotation.x = -Math.PI / 2;
       d.position.set(0, 0.005, -i * (CHUNK_LEN / dashCount) - dashLen / 2 - CHUNK_LEN / dashCount / 4);
       group.add(d);
     }
 
-    // Red/white curb strips on both sides
+    // Red/white curbs
     const curbW = 0.55;
     const curbSeg = 6;
     for (let i = 0; i < curbSeg; i++) {
@@ -284,21 +316,19 @@ class HyperspeedApp {
       const cColor = i % 2 === 0 ? 0xdc0000 : 0x333333;
       [-(roadWidth / 2 + curbW / 2), roadWidth / 2 + curbW / 2].forEach((cx) => {
         const cb = new THREE.Mesh(
-          new THREE.PlaneGeometry(curbW, cLen * 0.9),
+          new THREE.PlaneGeometry(curbW, cLen * 0.9, 1, 4).rotateX(-Math.PI / 2),
           this.makeLaneMat(cColor)
         );
-        cb.rotation.x = -Math.PI / 2;
         cb.position.set(cx, 0.003, -i * cLen - cLen / 2);
         group.add(cb);
       });
     }
 
-    // Ground (island) beyond road
+    // Ground (island)
     const gnd = new THREE.Mesh(
-      new THREE.PlaneGeometry(80, CHUNK_LEN),
+      new THREE.PlaneGeometry(120, CHUNK_LEN, 1, 24).rotateX(-Math.PI / 2),
       this.makeLaneMat(colors.island)
     );
-    gnd.rotation.x = -Math.PI / 2;
     gnd.position.set(0, -0.01, -CHUNK_LEN / 2);
     group.add(gnd);
 
@@ -341,10 +371,9 @@ class HyperspeedApp {
       const rad   = rnd(0.05, 0.14);
       const color = pick(colors.leftStreaks as number[]);
 
-      const geo = new THREE.CylinderGeometry(rad, rad * 0.25, len, 5);
-      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
+      const geo = new THREE.CylinderGeometry(rad, rad * 0.25, len, 5, 8).rotateX(Math.PI / 2);
+      const mat = this.makeLaneMat(color as number, 0.85);
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = Math.PI / 2;
 
       const z = -rnd(5, ROAD_DEPTH * 0.9);
       mesh.position.set(x, rnd(0.1, 0.35), z);
@@ -362,10 +391,9 @@ class HyperspeedApp {
       const rad   = rnd(0.05, 0.12);
       const color = pick(colors.rightStreaks as number[]);
 
-      const geo = new THREE.CylinderGeometry(rad, rad * 0.3, len, 5);
-      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 });
+      const geo = new THREE.CylinderGeometry(rad, rad * 0.3, len, 5, 8).rotateX(Math.PI / 2);
+      const mat = this.makeLaneMat(color as number, 0.75);
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = Math.PI / 2;
 
       const z = -rnd(5, ROAD_DEPTH * 0.9);
       mesh.position.set(x, rnd(0.1, 0.35), z);
@@ -406,12 +434,8 @@ class HyperspeedApp {
     for (let i = 0; i < sideStickCount; i++) {
       const z      = -i * spacing;
       const height = rnd(1.4, 2.2);
-      const geo    = new THREE.CylinderGeometry(0.05, 0.05, height, 5);
-      const mat    = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(colors.sideSticks),
-        transparent: true,
-        opacity: 0.8,
-      });
+      const geo    = new THREE.CylinderGeometry(0.05, 0.05, height, 5, 4);
+      const mat    = this.makeLaneMat(colors.sideSticks, 0.8);
 
       const left  = new THREE.Mesh(geo.clone(), mat.clone());
       const right = new THREE.Mesh(geo.clone(), mat.clone());
@@ -421,7 +445,7 @@ class HyperspeedApp {
 
       // Tiny glowing cap on top
       const capGeo = new THREE.SphereGeometry(0.1, 4, 4);
-      const capMat = new THREE.MeshBasicMaterial({ color: colors.sideSticks });
+      const capMat = this.makeLaneMat(colors.sideSticks, 1.0);
       const capL   = new THREE.Mesh(capGeo, capMat);
       const capR   = new THREE.Mesh(capGeo.clone(), capMat.clone());
       capL.position.set(-sideX, height, z);
@@ -488,6 +512,9 @@ class HyperspeedApp {
 
     // Move side sticks with road
     this.updateSideSticks(delta, speed);
+
+    // Update global shader time for the 3D loop distortion
+    this.uniforms.uTime.value = t;
 
     // Camera: gentle sinusoidal sway — road-warp illusion
     const swayX = Math.sin(t * 0.18) * 0.35;
