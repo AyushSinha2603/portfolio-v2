@@ -165,13 +165,21 @@ class HyperspeedApp {
     this.addListeners(container);
 
     // Add Lights for the 3D Model (glTF uses PBR materials which need light)
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5); // high intensity ambient
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // reduced white ambient
     this.scene.add(ambientLight);
     
-    const dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
-    dirLight.position.set(5, 10, -10);
-    dirLight.lookAt(0, 0, -6);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    dirLight.position.set(0, 10, -5);
     this.scene.add(dirLight);
+
+    // Neon Rim Lights to match the track (Red on left, Blue on right)
+    const leftRedLight = new THREE.PointLight(0xdc0000, 50, 20);
+    leftRedLight.position.set(-3, 1, -4);
+    this.scene.add(leftRedLight);
+
+    const rightBlueLight = new THREE.PointLight(0x0044cc, 50, 20);
+    rightBlueLight.position.set(3, 1, -4);
+    this.scene.add(rightBlueLight);
 
     // Load F1 Car
     const loader = new GLTFLoader();
@@ -187,26 +195,29 @@ class HyperspeedApp {
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
       
-      // If max dimension is very small or large, we normalize it to roughly 2-3 units long
-      const targetLength = 4; // car should be ~4 units long on this track
+      // If max dimension is very small or large, we normalize it to roughly 7 units long
+      const targetLength = 7.5; // Made the car significantly larger
       const scaleFactor = targetLength / size.z;
       
       this.f1Car.scale.set(scaleFactor, scaleFactor, scaleFactor);
       
       // Position car centrally on the road in front of camera
-      // Camera is at y=2.5, looking at y=1.8. Place car at y=0.05
-      this.f1Car.position.set(0, 0.05, -8);
+      // Bring the car much closer to the camera so it looks bigger
+      this.f1Car.position.set(0, 0.05, -4.5);
       
       // Face forward (down the -Z axis)
       this.f1Car.rotation.set(0, Math.PI, 0); 
       
-      // Ensure materials are brightly lit despite dark environment
+      // Enhance materials to look metallic and reflect the neon lights
       this.f1Car.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           if (child.material) {
-             // Make standard materials pop
-             if (child.material.emissive !== undefined) {
-               child.material.emissive = new THREE.Color(0x222222); // subtle self-glow
+             // Improve PBR material look without environment map
+             child.material.roughness = 0.2;
+             child.material.metalness = 0.8;
+             // Remove the artificial gray emissive which causes fading
+             if (child.material.emissive) {
+               child.material.emissive.setHex(0x000000); 
              }
              child.material.needsUpdate = true;
           }
