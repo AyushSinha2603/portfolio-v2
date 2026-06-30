@@ -147,16 +147,9 @@ body {
   color: var(--success);
 }
 
-/* Section animations */
+/* Section styles */
 .garage-section {
-  opacity: 0;
-  transform: translateY(30px);
-  will-change: transform, opacity;
-}
-
-.garage-section.visible {
-  opacity: 1;
-  transform: translateY(0);
+  width: 100%;
 }
 
 /* Canvas container */
