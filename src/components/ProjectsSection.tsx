@@ -22,7 +22,7 @@ const projects: Project[] = [
     name: 'MailSense AI',
     description: 'AI-powered email assistant integrating Gemini API',
     details:
-      'Designed a layered backend architecture focused on secure email processing. Implemented REST APIs for workflow automation, successfully parsing 40+ emails during system evaluation.',
+      'Backend architecture focused on secure email processing. Implemented REST APIs for automation, parsing 40+ emails concurrently.',
     metrics: [
       { label: 'Latency', value: '<500ms' },
       { label: 'Concurrent Req', value: '100+' },
@@ -35,7 +35,7 @@ const projects: Project[] = [
     name: 'Sleepyhead Studios',
     description: 'Official landing platform with dynamic game showcases',
     details:
-      'Developed and deployed using Next.js 14 and React 19. Leveraged Server Components to optimize frontend rendering performance and configured custom domains with DNS routing.',
+      'Deployed using Next.js 14 and React 19. Leveraged Server Components for high-performance frontend rendering and configured DNS routing.',
     metrics: [
       { label: 'Scroll', value: 'Lenis' },
       { label: 'Animations', value: 'Framer Motion' },
@@ -48,7 +48,7 @@ const projects: Project[] = [
     name: 'Opening Forge',
     description: 'Chess opening analysis and representation system',
     details:
-      'Engineered an optimized data model integrating the complete Lichess ECO dataset. Designed system workflows for FEN-indexed position generation and engine evaluation processing.',
+      'Optimized data model integrating the Lichess ECO dataset. Designed system workflows for FEN-based engine evaluation.',
     metrics: [
       { label: 'Openings', value: '3,700+' },
       { label: 'Dataset', value: 'Lichess ECO' },
@@ -61,7 +61,7 @@ const projects: Project[] = [
     name: 'Accident Severity Prediction',
     description: 'Machine learning system for traffic risk assessment',
     details:
-      'Trained and evaluated on a robust dataset of real-world traffic records. Performed data cleaning, feature engineering, and exploratory data analysis to develop predictive models.',
+      'Trained on 300K+ real-world traffic records. Performed data cleaning, feature engineering, and EDA for predictive modeling.',
     metrics: [
       { label: 'Dataset', value: '300,000+ records' },
       { label: 'Stack', value: 'Python' },

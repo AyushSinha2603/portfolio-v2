@@ -18,13 +18,6 @@ const contributions: Contribution[] = [
     stars: '1.5K',
     role: 'Contributor',
   },
-  {
-    repo: 'fitztrev/rosen-score',
-    description:
-      'Implemented cross-platform aggregation from Lichess and Chess.com. Engineered concurrent API request handling and dynamic UI updates. (Passed CI checks; pending review).',
-    stars: '120',
-    role: 'Contributor',
-  },
 ];
 
 function RoleBadge({ role }: { role: 'Contributor' | 'Maintainer' }) {

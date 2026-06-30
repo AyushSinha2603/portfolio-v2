@@ -52,13 +52,6 @@ const FooterSection = forwardRef<HTMLDivElement>((_, ref) => {
             <FileDown className="h-4 w-4" />
             View Resume
           </a>
-          <a
-            href="/resume/123CE0125_AyushSinha.pdf"
-            download="Ayush_Sinha_Resume.pdf"
-            className="font-headline inline-flex items-center gap-2 rounded-full border border-redbull-red px-6 py-3 font-semibold tracking-wide text-redbull-red transition-colors duration-200 hover:bg-redbull-red hover:text-white"
-          >
-            Download
-          </a>
         </div>
 
         {/* Tagline */}
