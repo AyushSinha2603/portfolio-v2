@@ -1,26 +1,188 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #e0e0e0;
+  --carbon: #0a0a0a;
+  --carbon-light: #141414;
+  --carbon-lighter: #1a1a1a;
+  --titanium: #e0e0e0;
+  --silver: #888888;
+  --redbull-blue: #1B1464;
+  --redbull-blue-light: #2d2a8a;
+  --redbull-red: #DC0000;
+  --redbull-red-glow: rgba(220, 0, 0, 0.3);
+  --glass-bg: rgba(10, 10, 10, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --success: #22c55e;
+  --font-headline: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-carbon: var(--carbon);
+  --color-carbon-light: var(--carbon-light);
+  --color-carbon-lighter: var(--carbon-lighter);
+  --color-titanium: var(--titanium);
+  --color-silver: var(--silver);
+  --color-redbull-blue: var(--redbull-blue);
+  --color-redbull-blue-light: var(--redbull-blue-light);
+  --color-redbull-red: var(--redbull-red);
+  --color-success: var(--success);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-headline: var(--font-headline);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--carbon);
+  color: var(--titanium);
+  font-family: var(--font-body);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--carbon);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+}
+
+.glass-panel-hover:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Font classes */
+.font-headline {
+  font-family: var(--font-headline);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Red accent line */
+.accent-line {
+  width: 60px;
+  height: 3px;
+  background: var(--redbull-red);
+  border-radius: 2px;
+}
+
+/* Subtle glow effects */
+.red-glow {
+  box-shadow: 0 0 20px var(--redbull-red-glow);
+}
+
+/* Tech tag pills */
+.tech-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: rgba(27, 20, 100, 0.25);
+  border: 1px solid rgba(27, 20, 100, 0.4);
+  color: #c4c0ff;
+}
+
+/* Proficiency bar */
+.proficiency-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.proficiency-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--redbull-blue), var(--redbull-blue-light));
+}
+
+/* Metric value styling */
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--success);
+}
+
+/* Section animations */
+.garage-section {
+  opacity: 0;
+  transform: translateY(30px);
+  will-change: transform, opacity;
+}
+
+.garage-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Canvas container */
+.canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.canvas-container canvas {
+  pointer-events: auto;
+}
+
+/* Overlay content */
+.overlay-content {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+/* Selection */
+::selection {
+  background: rgba(220, 0, 0, 0.3);
+  color: var(--titanium);
 }
