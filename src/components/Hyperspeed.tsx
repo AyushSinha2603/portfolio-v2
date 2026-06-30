@@ -164,6 +164,15 @@ class HyperspeedApp {
     this.buildSideSticks();
     this.addListeners(container);
 
+    // Add Lights for the 3D Model (glTF uses PBR materials which need light)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5); // high intensity ambient
+    this.scene.add(ambientLight);
+    
+    const dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
+    dirLight.position.set(5, 10, -10);
+    dirLight.lookAt(0, 0, -6);
+    this.scene.add(dirLight);
+
     // Load F1 Car
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
@@ -173,12 +182,36 @@ class HyperspeedApp {
     loader.load('/models/f1car-transformed.glb', (gltf) => {
       this.f1Car = gltf.scene;
       
-      // Position car centrally on the road in front of camera
-      this.f1Car.position.set(0, 0, -6);
+      // Calculate original size to scale appropriately
+      const box = new THREE.Box3().setFromObject(this.f1Car);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
       
-      // Face forward (down the -Z axis) and scale to track
+      // If max dimension is very small or large, we normalize it to roughly 2-3 units long
+      const targetLength = 4; // car should be ~4 units long on this track
+      const scaleFactor = targetLength / size.z;
+      
+      this.f1Car.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      
+      // Position car centrally on the road in front of camera
+      // Camera is at y=2.5, looking at y=1.8. Place car at y=0.05
+      this.f1Car.position.set(0, 0.05, -8);
+      
+      // Face forward (down the -Z axis)
       this.f1Car.rotation.set(0, Math.PI, 0); 
-      this.f1Car.scale.set(0.65, 0.65, 0.65);
+      
+      // Ensure materials are brightly lit despite dark environment
+      this.f1Car.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          if (child.material) {
+             // Make standard materials pop
+             if (child.material.emissive !== undefined) {
+               child.material.emissive = new THREE.Color(0x222222); // subtle self-glow
+             }
+             child.material.needsUpdate = true;
+          }
+        }
+      });
       
       this.scene.add(this.f1Car);
     });
