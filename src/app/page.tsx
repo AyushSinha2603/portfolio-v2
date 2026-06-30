@@ -52,21 +52,6 @@ export default function Home() {
         },
       });
 
-      // ── Hero: fade + lift out ──────────────────────────────────────────────
-      if (heroRef.current) {
-        gsap.to(heroRef.current, {
-          opacity: 0,
-          y: -80,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: heroRef.current,
-            start: 'top top',
-            end: 'bottom top',
-            scrub: 1,
-          },
-        });
-      }
-
       // ── Garage sections: animate IN only (start visible, slide from side) ──
       const garageSections = [
         { ref: techRef,       fromX: -60 },
@@ -78,19 +63,23 @@ export default function Home() {
       garageSections.forEach(({ ref, fromX }) => {
         if (!ref.current) return;
 
-        // Animate in on scroll using gsap.from (automatically handles initial state)
-        gsap.from(ref.current, {
-          opacity: 0,
-          x: fromX,
-          y: 50,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: ref.current,
-            start: 'top 85%',
-            end: 'top 35%',
-            scrub: 1,
-          },
-        });
+        // Animate in on scroll using gsap.fromTo (immune to React Strict Mode double-fire bugs)
+        gsap.fromTo(
+          ref.current,
+          { opacity: 0, x: fromX, y: 50 },
+          {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: ref.current,
+              start: 'top 85%',
+              end: 'top 35%',
+              scrub: 1,
+            },
+          }
+        );
       });
 
     }, mainRef);
@@ -103,19 +92,16 @@ export default function Home() {
       {/* ── Fixed racing background ─── */}
       <HyperspeedBackground scrollSpeed={scrollSpeed} />
 
-      {/* ── Scroll runway (500vh) ─── */}
+      {/* ── Scroll container ─── */}
       <div
         ref={mainRef}
-        style={{ position: 'relative', zIndex: 10, height: '500vh' }}
+        style={{ position: 'relative', zIndex: 10 }}
       >
-
-        {/* 01 — Starting Grid (sticky hero) */}
+        {/* 01 — Starting Grid (Hero) */}
         <div
           ref={heroRef}
           style={{
-            height: '100vh',
-            position: 'sticky',
-            top: 0,
+            minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
