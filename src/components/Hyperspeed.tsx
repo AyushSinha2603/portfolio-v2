@@ -211,19 +211,25 @@ class HyperspeedApp {
       // Face forward (down the -Z axis)
       this.f1Car.rotation.set(0, Math.PI, 0); 
       
-      // Enhance materials to look metallic and reflect the neon lights
+      // Convert realistic PBR materials into a Neon "Tron" aesthetic to match track
       this.f1Car.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-          if (child.material) {
-             // Improve PBR material look without environment map
-             child.material.roughness = 0.2;
-             child.material.metalness = 0.8;
-             // Remove the artificial gray emissive which causes fading
-             if (child.material.emissive) {
-               child.material.emissive.setHex(0x000000); 
-             }
-             child.material.needsUpdate = true;
-          }
+           // 1. Give the car a pitch-black solid body so we don't see through it
+           child.material = new THREE.MeshBasicMaterial({ 
+             color: 0x020202,
+           });
+           
+           // 2. Add glowing neon edges on top of the geometry
+           const edges = new THREE.EdgesGeometry(child.geometry, 15);
+           const line = new THREE.LineSegments(
+             edges, 
+             new THREE.LineBasicMaterial({ 
+               color: 0x0088ff, // Neon cyan/blue 
+               transparent: true,
+               opacity: 0.8
+             })
+           );
+           child.add(line);
         }
       });
       
@@ -249,11 +255,11 @@ class HyperspeedApp {
         '#include <begin_vertex>',
         `#include <begin_vertex>
         vec4 wPos = modelMatrix * vec4(position, 1.0);
-        float dz = max(0.0, -wPos.z - 10.0); // Bends start smoothly past the car
+        float dz = max(0.0, -wPos.z - 8.0); // Bends start smoothly past the car
         
-        // Loop and twisting curve math
-        float xOff = sin(dz * 0.015 + uTime * 2.5) * dz * 0.15;
-        float yOff = (cos(dz * 0.01 + uTime * 1.5) * dz * 0.15) - (dz * dz * 0.001);
+        // Loop and twisting curve math (Increased for more extreme curves)
+        float xOff = sin(dz * 0.02 + uTime * 3.0) * dz * 0.3;
+        float yOff = (cos(dz * 0.015 + uTime * 2.0) * dz * 0.25) - (dz * dz * 0.002);
         
         transformed.x += xOff;
         transformed.y += yOff;
@@ -529,12 +535,19 @@ class HyperspeedApp {
 
     // Animate F1 Car
     if (this.f1Car) {
-      // Car sways with camera but leads slightly ahead
-      this.f1Car.position.x = swayX * 0.85;
-      // High-speed vibration
-      this.f1Car.position.y = 0.01 + Math.sin(t * 35) * 0.01 * (speed / this.opts.baseSpeed);
-      // Subtle roll when turning
-      this.f1Car.rotation.z = -swayX * 0.05;
+      // Calculate upcoming track curve based on the shader math logic
+      const trackCurveX = Math.sin(t * 3.0); 
+      const trackCurveY = Math.cos(t * 2.0);
+
+      // Car position sways with track steering
+      this.f1Car.position.x = swayX * 0.8 + trackCurveX * 0.4;
+      // High-speed vibration + bouncing with the road
+      this.f1Car.position.y = 0.01 + Math.sin(t * 35) * 0.01 * (speed / this.opts.baseSpeed) + trackCurveY * 0.1;
+      
+      // Dynamic orientation (Steering, Leaning, Pitching)
+      this.f1Car.rotation.y = Math.PI - trackCurveX * 0.15; // Yaw (Steer into the curve)
+      this.f1Car.rotation.z = -trackCurveX * 0.1;           // Roll (Lean into the curve)
+      this.f1Car.rotation.x = trackCurveY * 0.05;           // Pitch (Nose up/down on hills)
       
       // Rotate wheels
       this.f1Car.traverse((child) => {
