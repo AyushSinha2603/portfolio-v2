@@ -171,12 +171,13 @@ class HyperspeedApp {
 
     // Ground / island strip
     const groundGeo = new THREE.PlaneGeometry(totalW + 16, L);
-    this.scene.add(
-      Object.assign(
-        new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({ color: colors.islandColor })),
-        { rotation: { x: -Math.PI / 2, y: 0, z: 0 }, position: { x: 0, y: -0.02, z: -L / 2 } }
-      )
+    const ground = new THREE.Mesh(
+      groundGeo,
+      new THREE.MeshBasicMaterial({ color: colors.islandColor ?? 0x080808 })
     );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, -0.02, -L / 2);
+    this.scene.add(ground);
 
     // Left road lane
     const laneGeo = new THREE.PlaneGeometry(roadWidth, L);
