@@ -78,21 +78,17 @@ export default function Home() {
       garageSections.forEach(({ ref, fromX }) => {
         if (!ref.current) return;
 
-        // Set initial state via CSS so it doesn't flicker
-        gsap.set(ref.current, { opacity: 0, x: fromX, y: 30 });
-
-        // Animate in on scroll
-        gsap.to(ref.current, {
-          opacity: 1,
-          x: 0,
-          y: 0,
+        // Animate in on scroll using gsap.from (automatically handles initial state)
+        gsap.from(ref.current, {
+          opacity: 0,
+          x: fromX,
+          y: 50,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: ref.current,
-            start: 'top 88%',
-            end: 'top 40%',
+            start: 'top 85%',
+            end: 'top 35%',
             scrub: 1,
-            toggleActions: 'play none none reverse',
           },
         });
       });
