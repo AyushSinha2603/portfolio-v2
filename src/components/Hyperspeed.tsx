@@ -10,7 +10,7 @@ import {
   SMAAEffect,
   SMAAPreset,
 } from 'postprocessing';
-import { GLTFLoader } from 'three-stdlib';
+import { GLTFLoader, DRACOLoader } from 'three-stdlib';
 
 export interface HyperspeedOptions {
   onSpeedUp?: () => void;
@@ -166,6 +166,10 @@ class HyperspeedApp {
 
     // Load F1 Car
     const loader = new GLTFLoader();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+    loader.setDRACOLoader(dracoLoader);
+
     loader.load('/models/f1car-transformed.glb', (gltf) => {
       this.f1Car = gltf.scene;
       
