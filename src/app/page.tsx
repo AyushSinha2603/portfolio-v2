@@ -73,16 +73,9 @@ export default function Home() {
         {/* 01 — Starting Grid (Hero) */}
         <div
           ref={heroRef}
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingLeft: '5%',
-            overflow: 'hidden',
-          }}
+          className="flex min-h-screen items-center justify-center px-4 md:justify-start md:px-[5%] overflow-hidden"
         >
-          <div style={{ maxWidth: '40vw' }}>
+          <div className="w-full md:max-w-[40vw]">
             <HeroSection scrollProgress={scrollProgress} />
           </div>
         </div>
@@ -92,15 +85,9 @@ export default function Home() {
         {/* 02 — Car Architecture (Tech Stack) */}
         <div
           ref={techRef}
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            paddingRight: '5%',
-          }}
+          className="flex min-h-screen items-center justify-center px-4 md:justify-end md:px-[5%]"
         >
-          <div style={{ maxWidth: '40vw' }}>
+          <div className="w-full md:max-w-[40vw]">
             <TechStackSection />
           </div>
         </div>
@@ -110,15 +97,9 @@ export default function Home() {
         {/* 03 — Track Record (Projects) */}
         <div
           ref={projectsRef}
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            paddingLeft: '5%',
-          }}
+          className="flex min-h-screen items-center justify-center px-4 md:justify-start md:px-[5%]"
         >
-          <div style={{ maxWidth: '40vw' }}>
+          <div className="w-full md:max-w-[40vw]">
             <ProjectsSection />
           </div>
         </div>
@@ -128,15 +109,9 @@ export default function Home() {
         {/* 04 — Telemetry (Open Source) */}
         <div
           ref={openSourceRef}
-          style={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            paddingRight: '5%',
-          }}
+          className="flex min-h-screen items-center justify-center px-4 md:justify-end md:px-[5%]"
         >
-          <div style={{ maxWidth: '40vw' }}>
+          <div className="w-full md:max-w-[40vw]">
             <OpenSourceSection />
           </div>
         </div>

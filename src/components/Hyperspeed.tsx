@@ -135,10 +135,13 @@ class HyperspeedApp {
       },
     };
 
+    const isMobile = window.innerWidth < 768;
+
     // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // Hard cap pixel ratio on mobile to save GPU fill-rate
+    this.renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio, 1.5));
     container.appendChild(this.renderer.domElement);
 
     // Scene
@@ -160,9 +163,17 @@ class HyperspeedApp {
     // Post-processing
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    const bloom = new BloomEffect({ intensity: 2.2, luminanceThreshold: 0.05, luminanceSmoothing: 0.3 });
-    const smaa  = new SMAAEffect({ preset: SMAAPreset.LOW });
-    this.composer.addPass(new EffectPass(this.camera, bloom, smaa));
+    
+    // Scale down bloom intensity and completely disable SMAA (anti-aliasing) on mobile
+    const bloomIntensity = isMobile ? 1.2 : 2.2;
+    const bloom = new BloomEffect({ intensity: bloomIntensity, luminanceThreshold: 0.05, luminanceSmoothing: 0.3 });
+    
+    if (isMobile) {
+      this.composer.addPass(new EffectPass(this.camera, bloom));
+    } else {
+      const smaa = new SMAAEffect({ preset: SMAAPreset.LOW });
+      this.composer.addPass(new EffectPass(this.camera, bloom, smaa));
+    }
 
     this.buildRoad();
     this.buildStreaks();
