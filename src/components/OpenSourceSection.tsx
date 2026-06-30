@@ -83,13 +83,17 @@ function ContributionGrid() {
   const rows = 5;
   const cols = 20;
 
+  // Deterministic grid — same on server and client, no hydration mismatch
   const grid = useMemo(() => {
-    const opacityLevels = [0, 0.1, 0.25, 0.4, 0.7];
+    const opacityLevels = [0, 0, 0.1, 0.1, 0.25, 0.4, 0.7];
     const cells: number[][] = [];
+    // Simple seeded pattern based on row/col position
     for (let r = 0; r < rows; r++) {
       const row: number[] = [];
       for (let c = 0; c < cols; c++) {
-        row.push(opacityLevels[Math.floor(Math.random() * opacityLevels.length)]);
+        // Deterministic pseudo-random using position math
+        const seed = (r * 37 + c * 17 + r * c * 7) % opacityLevels.length;
+        row.push(opacityLevels[seed]);
       }
       cells.push(row);
     }

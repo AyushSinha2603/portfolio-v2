@@ -2,24 +2,20 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset } from 'postprocessing';
+import {
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  RenderPass,
+  SMAAEffect,
+  SMAAPreset,
+} from 'postprocessing';
 
-// ─── Type definitions ────────────────────────────────────────────────────────
-
-interface DistortionUniforms {
-  [key: string]: { value: THREE.Vector2 | THREE.Vector3 | THREE.Vector4 | number };
-}
-
-interface Distortion {
-  uniforms: DistortionUniforms;
-  getDistortion: string;
-  getJS: (progress: number, time: number) => THREE.Vector3;
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface HyperspeedOptions {
   onSpeedUp?: () => void;
   onSlowDown?: () => void;
-  distortion?: string;
   length?: number;
   roadWidth?: number;
   islandWidth?: number;
@@ -27,27 +23,16 @@ export interface HyperspeedOptions {
   fov?: number;
   fovSpeedUp?: number;
   speedUp?: number;
-  carLightsFade?: number;
   totalSideLightSticks?: number;
   lightPairsPerRoadWay?: number;
-  shoulderLinesWidthPercentage?: number;
-  brokenLinesWidthPercentage?: number;
-  brokenLinesLengthPercentage?: number;
-  lightStickWidth?: [number, number];
-  lightStickHeight?: [number, number];
   movingAwaySpeed?: [number, number];
   movingCloserSpeed?: [number, number];
   carLightsLength?: [number, number];
   carLightsRadius?: [number, number];
-  carWidthPercentage?: [number, number];
-  carShiftX?: [number, number];
-  carFloorSeparation?: [number, number];
   colors?: {
     roadColor?: number;
     islandColor?: number;
     background?: number;
-    shoulderLines?: number;
-    brokenLines?: number;
     leftCars?: number[];
     rightCars?: number[];
     sticks?: number;
@@ -57,387 +42,329 @@ export interface HyperspeedOptions {
 // ─── F1 Red Bull Preset ───────────────────────────────────────────────────────
 
 export const f1RedBullPreset: HyperspeedOptions = {
-  distortion: 'turbulentDistortion',
   length: 400,
   roadWidth: 9,
   islandWidth: 2,
   lanesPerRoad: 3,
   fov: 90,
-  fovSpeedUp: 140,
+  fovSpeedUp: 130,
   speedUp: 2,
-  carLightsFade: 0.4,
   totalSideLightSticks: 20,
-  lightPairsPerRoadWay: 40,
-  shoulderLinesWidthPercentage: 0.05,
-  brokenLinesWidthPercentage: 0.1,
-  brokenLinesLengthPercentage: 0.5,
-  lightStickWidth: [0.12, 0.5],
-  lightStickHeight: [1.3, 1.7],
-  movingAwaySpeed: [60, 80],
-  movingCloserSpeed: [-120, -160],
-  carLightsLength: [400 * 0.03, 400 * 0.2],
-  carLightsRadius: [0.05, 0.14],
-  carWidthPercentage: [0.3, 0.5],
-  carShiftX: [-0.8, 0.8],
-  carFloorSeparation: [0, 5],
+  lightPairsPerRoadWay: 50,
+  movingAwaySpeed: [70, 100],
+  movingCloserSpeed: [130, 180],
+  carLightsLength: [15, 100],
+  carLightsRadius: [0.06, 0.16],
   colors: {
     roadColor: 0x0a0a0a,
     islandColor: 0x080808,
     background: 0x000000,
-    shoulderLines: 0x1B1464,   // Red Bull blue
-    brokenLines: 0x222222,
-    leftCars:  [0xDC0000, 0xff2200, 0xaa0000],  // Red Bull red — oncoming (tail lights)
-    rightCars: [0x3366ff, 0x1B1464, 0x0044cc],  // Red Bull blue — same-direction (headlights)
-    sticks: 0xDC0000,
+    leftCars: [0xdc0000, 0xff2200, 0xbb0000],   // Red — oncoming
+    rightCars: [0x1b1464, 0x3366ff, 0x0044cc],  // Blue — away
+    sticks: 0xdc0000,
   },
 };
 
-// ─── Utility helpers ──────────────────────────────────────────────────────────
+// ─── Random helper ────────────────────────────────────────────────────────────
 
-const random = (base: number | [number, number], spread?: number): number => {
-  if (Array.isArray(base)) return base[0] + Math.random() * (base[1] - base[0]);
-  return base - (spread ?? 0) / 2 + Math.random() * (spread ?? 0);
-};
+const rnd = ([min, max]: [number, number]) => min + Math.random() * (max - min);
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+// ─── Main App class ───────────────────────────────────────────────────────────
 
-// ─── Distortion definitions ───────────────────────────────────────────────────
-
-function buildDistortions() {
-  const nsin = (val: number) => Math.sin(val) * 0.5 + 0.5;
-
-  const turbulentUniforms: DistortionUniforms = {
-    uFreq: { value: new THREE.Vector4(4, 8, 8, 1) },
-    uAmp: { value: new THREE.Vector4(25, 5, 10, 10) },
-  };
-
-  const distortions: Record<string, Distortion> = {
-    turbulentDistortion: {
-      uniforms: turbulentUniforms,
-      getDistortion: `
-        uniform vec4 uFreq;
-        uniform vec4 uAmp;
-        float nsin(float val){ return sin(val) * 0.5 + 0.5; }
-        #define PI 3.14159265358979
-        float getDistortionX(float progress){
-          return (
-            cos(PI * progress * uFreq.r + uTime) * uAmp.r +
-            pow(cos(PI * progress * uFreq.g + uTime * (uFreq.g / uFreq.r)), 2.) * uAmp.g
-          );
-        }
-        float getDistortionY(float progress){
-          return (
-            -nsin(PI * progress * uFreq.b + uTime) * uAmp.b +
-            -pow(nsin(PI * progress * uFreq.a + uTime / (uFreq.b / uFreq.a)), 2.) * uAmp.a
-          );
-        }
-        vec3 getDistortion(float progress){
-          return vec3(getDistortionX(progress), getDistortionY(progress), 0.);
-        }
-      `,
-      getJS: (progress: number, time: number) => {
-        const uFreq = (turbulentUniforms.uFreq.value as THREE.Vector4);
-        const uAmp = (turbulentUniforms.uAmp.value as THREE.Vector4);
-        const dx =
-          Math.cos(Math.PI * progress * uFreq.x + time) * uAmp.x +
-          Math.pow(Math.cos(Math.PI * progress * uFreq.y + time * (uFreq.y / uFreq.x)), 2) * uAmp.y;
-        const dy =
-          -nsin(Math.PI * progress * uFreq.z + time) * uAmp.z +
-          -Math.pow(nsin(Math.PI * progress * uFreq.w + time / (uFreq.z / uFreq.w)), 2) * uAmp.w;
-        return new THREE.Vector3(dx, dy, 0).multiply(new THREE.Vector3(2, 0.4, 0)).add(new THREE.Vector3(0, 0, -3));
-      },
-    },
-  };
-
-  return distortions;
+interface CarInstance {
+  mesh: THREE.Mesh;
+  speed: number;   // units/sec
+  z: number;       // current z
+  xPos: number;
+  side: 'left' | 'right';
 }
 
-// ─── App class (Three.js scene) ───────────────────────────────────────────────
-
 class HyperspeedApp {
-  private options: Required<HyperspeedOptions>;
+  private opts: Required<HyperspeedOptions>;
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
-  private composer!: EffectComposer;
-  private clock: THREE.Timer;
-  private distortions: Record<string, Distortion>;
-  private distortion: Distortion;
-  private speedUpTarget = 0;
-  private speedUp = 0;
-  private timeOffset = 0;
-  private animId = 0;
-  private road!: THREE.Mesh;
-  private island!: THREE.Mesh;
-  private leftCarLights!: THREE.Mesh;
-  private rightCarLights!: THREE.Mesh;
-  private leftSticks!: THREE.InstancedMesh;
-  private rightSticks!: THREE.InstancedMesh;
-  private carInstances: Array<{
-    mesh: THREE.Mesh;
-    speed: number;
-    progress: number;
-    offset: number;
-    laneIndex: number;
-    side: 'left' | 'right';
-  }> = [];
+  private composer: EffectComposer;
+  private cars: CarInstance[] = [];
+  private stickMeshes: THREE.Mesh[] = [];
+
+  private rafId = 0;
+  private lastTime = 0;   // ms, from performance.now()
+  private timeElapsed = 0; // seconds
   private disposed = false;
 
-  constructor(container: HTMLElement, options: HyperspeedOptions) {
-    const colors = options.colors ?? {};
-    this.options = {
-      onSpeedUp: options.onSpeedUp ?? (() => {}),
-      onSlowDown: options.onSlowDown ?? (() => {}),
-      distortion: options.distortion ?? 'turbulentDistortion',
-      length: options.length ?? 400,
-      roadWidth: options.roadWidth ?? 9,
-      islandWidth: options.islandWidth ?? 2,
-      lanesPerRoad: options.lanesPerRoad ?? 3,
-      fov: options.fov ?? 90,
-      fovSpeedUp: options.fovSpeedUp ?? 140,
-      speedUp: options.speedUp ?? 2,
-      carLightsFade: options.carLightsFade ?? 0.4,
-      totalSideLightSticks: options.totalSideLightSticks ?? 20,
-      lightPairsPerRoadWay: options.lightPairsPerRoadWay ?? 40,
-      shoulderLinesWidthPercentage: options.shoulderLinesWidthPercentage ?? 0.05,
-      brokenLinesWidthPercentage: options.brokenLinesWidthPercentage ?? 0.1,
-      brokenLinesLengthPercentage: options.brokenLinesLengthPercentage ?? 0.5,
-      lightStickWidth: options.lightStickWidth ?? [0.12, 0.5],
-      lightStickHeight: options.lightStickHeight ?? [1.3, 1.7],
-      movingAwaySpeed: options.movingAwaySpeed ?? [60, 80],
-      movingCloserSpeed: options.movingCloserSpeed ?? [-120, -160],
-      carLightsLength: options.carLightsLength ?? [12, 80],
-      carLightsRadius: options.carLightsRadius ?? [0.05, 0.14],
-      carWidthPercentage: options.carWidthPercentage ?? [0.3, 0.5],
-      carShiftX: options.carShiftX ?? [-0.8, 0.8],
-      carFloorSeparation: options.carFloorSeparation ?? [0, 5],
+  // Interactive speedup
+  private speedMultiplier = 1;
+
+  constructor(container: HTMLElement, opts: HyperspeedOptions) {
+    const c = opts.colors ?? {};
+    this.opts = {
+      onSpeedUp: opts.onSpeedUp ?? (() => {}),
+      onSlowDown: opts.onSlowDown ?? (() => {}),
+      length: opts.length ?? 400,
+      roadWidth: opts.roadWidth ?? 9,
+      islandWidth: opts.islandWidth ?? 2,
+      lanesPerRoad: opts.lanesPerRoad ?? 3,
+      fov: opts.fov ?? 90,
+      fovSpeedUp: opts.fovSpeedUp ?? 130,
+      speedUp: opts.speedUp ?? 2,
+      totalSideLightSticks: opts.totalSideLightSticks ?? 20,
+      lightPairsPerRoadWay: opts.lightPairsPerRoadWay ?? 50,
+      movingAwaySpeed: opts.movingAwaySpeed ?? [70, 100],
+      movingCloserSpeed: opts.movingCloserSpeed ?? [130, 180],
+      carLightsLength: opts.carLightsLength ?? [15, 100],
+      carLightsRadius: opts.carLightsRadius ?? [0.06, 0.16],
       colors: {
-        roadColor: colors.roadColor ?? 0x080808,
-        islandColor: colors.islandColor ?? 0x0a0a0a,
-        background: colors.background ?? 0x000000,
-        shoulderLines: colors.shoulderLines ?? 0xffffff,
-        brokenLines: colors.brokenLines ?? 0xffffff,
-        leftCars: colors.leftCars ?? [0xd856bf, 0x6750a2, 0xc247ac],
-        rightCars: colors.rightCars ?? [0x03b3c3, 0x0e5ea5, 0x324555],
-        sticks: colors.sticks ?? 0x03b3c3,
+        roadColor: c.roadColor ?? 0x0a0a0a,
+        islandColor: c.islandColor ?? 0x080808,
+        background: c.background ?? 0x000000,
+        leftCars: c.leftCars ?? [0xdc0000, 0xff2200, 0xbb0000],
+        rightCars: c.rightCars ?? [0x1b1464, 0x3366ff, 0x0044cc],
+        sticks: c.sticks ?? 0xdc0000,
       },
     };
 
-    this.clock = new THREE.Timer();
-    this.distortions = buildDistortions();
-    this.distortion = this.distortions[this.options.distortion] ?? this.distortions.turbulentDistortion;
-
+    // Renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     container.appendChild(this.renderer.domElement);
 
+    // Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(this.options.colors.background);
+    this.scene.background = new THREE.Color(this.opts.colors.background ?? 0x000000);
+    this.scene.fog = new THREE.Fog(this.opts.colors.background ?? 0x000000, 50, 300);
 
-    this.camera = new THREE.PerspectiveCamera(this.options.fov, container.clientWidth / container.clientHeight, 0.1, 1000);
-    this.camera.position.set(0, 1.5, 5);
-    this.camera.lookAt(0, 0, -1);
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(
+      this.opts.fov,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      600
+    );
+    this.camera.position.set(0, 2, 6);
+    this.camera.lookAt(0, 0.5, -10);
+
+    // Post-processing
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    const bloom = new BloomEffect({
+      intensity: 1.6,
+      luminanceThreshold: 0.08,
+      luminanceSmoothing: 0.25,
+    });
+    const smaa = new SMAAEffect({ preset: SMAAPreset.LOW });
+    this.composer.addPass(new EffectPass(this.camera, bloom, smaa));
 
     this.buildScene();
-    this.buildPostProcessing();
-    this.addEventListeners(container);
+    this.addListeners(container);
+    this.lastTime = performance.now();
     this.animate();
   }
 
+  // ── Build static scene elements ─────────────────────────────────────────────
+
   private buildScene() {
-    const opts = this.options;
-    const L = opts.length;
-    const rw = opts.roadWidth;
-    const iw = opts.islandWidth;
-    const totalWidth = rw * 2 + iw;
+    const { length, roadWidth, islandWidth, colors } = this.opts;
+    const L = length;
+    const totalW = roadWidth * 2 + islandWidth;
 
-    // Ground plane
-    const groundGeo = new THREE.PlaneGeometry(totalWidth + 20, L);
-    const groundMat = new THREE.MeshBasicMaterial({ color: opts.colors.islandColor });
-    this.island = new THREE.Mesh(groundGeo, groundMat);
-    this.island.rotation.x = -Math.PI / 2;
-    this.island.position.z = -L / 2;
-    this.scene.add(this.island);
+    // Ground / island strip
+    const groundGeo = new THREE.PlaneGeometry(totalW + 16, L);
+    this.scene.add(
+      Object.assign(
+        new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({ color: colors.islandColor })),
+        { rotation: { x: -Math.PI / 2, y: 0, z: 0 }, position: { x: 0, y: -0.02, z: -L / 2 } }
+      )
+    );
 
-    // Road (left)
-    const roadGeo = new THREE.PlaneGeometry(rw, L);
-    const roadMat = new THREE.MeshBasicMaterial({ color: opts.colors.roadColor });
-    const leftRoad = new THREE.Mesh(roadGeo, roadMat);
+    // Left road lane
+    const laneGeo = new THREE.PlaneGeometry(roadWidth, L);
+    const laneMat = new THREE.MeshBasicMaterial({ color: colors.roadColor });
+    const leftRoad = new THREE.Mesh(laneGeo, laneMat);
     leftRoad.rotation.x = -Math.PI / 2;
-    leftRoad.position.set(-(rw / 2 + iw / 2), 0, -L / 2);
-    this.road = leftRoad;
+    leftRoad.position.set(-(roadWidth / 2 + islandWidth / 2), -0.01, -L / 2);
     this.scene.add(leftRoad);
 
-    // Road (right)
-    const rightRoad = new THREE.Mesh(roadGeo.clone(), roadMat.clone());
+    // Right road lane
+    const rightRoad = new THREE.Mesh(laneGeo.clone(), laneMat.clone());
     rightRoad.rotation.x = -Math.PI / 2;
-    rightRoad.position.set(rw / 2 + iw / 2, 0, -L / 2);
+    rightRoad.position.set(roadWidth / 2 + islandWidth / 2, -0.01, -L / 2);
     this.scene.add(rightRoad);
 
-    // Car lights - simple tubes representing streaming light trails
-    this.buildCarLights();
+    // Center island markings (dashed)
+    for (let z = 0; z > -L; z -= 8) {
+      const dashGeo = new THREE.PlaneGeometry(0.12, 3);
+      const dash = new THREE.Mesh(
+        dashGeo,
+        new THREE.MeshBasicMaterial({ color: 0x1b1464, transparent: true, opacity: 0.5 })
+      );
+      dash.rotation.x = -Math.PI / 2;
+      dash.position.set(0, 0, z - 1.5);
+      this.scene.add(dash);
+    }
 
-    // Side sticks (glowing poles on the roadside)
-    this.buildSideSticks();
+    // Roadside light sticks
+    const stickColor = new THREE.Color(colors.sticks);
+    const sideX = roadWidth / 2 + islandWidth / 2 + 0.7;
+    for (let i = 0; i < this.opts.totalSideLightSticks; i++) {
+      const z = -(i / this.opts.totalSideLightSticks) * L;
+      const height = 1.2 + Math.random() * 0.6;
+      const geo = new THREE.CylinderGeometry(0.04, 0.04, height, 4);
+      const mat = new THREE.MeshBasicMaterial({ color: stickColor, transparent: true, opacity: 0.7 });
+
+      const left = new THREE.Mesh(geo.clone(), mat.clone());
+      left.position.set(-sideX, height / 2, z);
+      this.scene.add(left);
+      this.stickMeshes.push(left);
+
+      const right = new THREE.Mesh(geo.clone(), mat.clone());
+      right.position.set(sideX, height / 2, z);
+      this.scene.add(right);
+      this.stickMeshes.push(right);
+    }
+
+    // Initial car light trails
+    this.spawnCars();
   }
 
-  private buildCarLights() {
-    const opts = this.options;
-    const colors = opts.colors;
-    const roadX = opts.roadWidth / 2 + opts.islandWidth / 2;
+  private spawnCars() {
+    const { length, roadWidth, islandWidth, lanesPerRoad,
+            lightPairsPerRoadWay, carLightsLength, carLightsRadius,
+            movingAwaySpeed, movingCloserSpeed, colors } = this.opts;
 
-    // Left side (oncoming — red headlights)
-    for (let i = 0; i < opts.lightPairsPerRoadWay; i++) {
-      const progress = i / opts.lightPairsPerRoadWay;
-      const z = -progress * opts.length;
-      const lane = Math.floor(Math.random() * opts.lanesPerRoad);
-      const laneWidth = opts.roadWidth / opts.lanesPerRoad;
-      const x = -roadX + lane * laneWidth + laneWidth / 2;
-      const len = random(opts.carLightsLength);
-      const radius = random(opts.carLightsRadius);
-      const geo = new THREE.CylinderGeometry(radius, radius, len, 6);
-      const color = colors.leftCars![Math.floor(Math.random() * colors.leftCars!.length)];
+    const laneW = roadWidth / lanesPerRoad;
+    const roadX = roadWidth / 2 + islandWidth / 2;
+
+    // Left road — oncoming (moving toward camera, z increases to 0)
+    for (let i = 0; i < lightPairsPerRoadWay; i++) {
+      const lane = Math.floor(Math.random() * lanesPerRoad);
+      const xPos = -(roadX - lane * laneW - laneW / 2);
+      const trailLen = rnd(carLightsLength);
+      const radius = rnd(carLightsRadius);
+      const color = (colors.leftCars as number[])[Math.floor(Math.random() * (colors.leftCars as number[]).length)];
+
+      const geo = new THREE.CylinderGeometry(radius, radius * 0.3, trailLen, 6);
       const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.x = Math.PI / 2;
-      mesh.position.set(x, 0.05, z);
+
+      const startZ = -Math.random() * length;
+      mesh.position.set(xPos, 0.05, startZ);
       this.scene.add(mesh);
-      this.carInstances.push({
+
+      this.cars.push({
         mesh,
-        speed: random(opts.movingCloserSpeed),
-        progress: Math.random(),
-        offset: z,
-        laneIndex: lane,
+        speed: rnd(movingCloserSpeed), // positive = moves toward +z
+        z: startZ,
+        xPos,
         side: 'left',
       });
     }
 
-    // Right side (same direction — blue tail lights)
-    for (let i = 0; i < opts.lightPairsPerRoadWay; i++) {
-      const progress = i / opts.lightPairsPerRoadWay;
-      const z = -progress * opts.length;
-      const lane = Math.floor(Math.random() * opts.lanesPerRoad);
-      const laneWidth = opts.roadWidth / opts.lanesPerRoad;
-      const x = roadX - lane * laneWidth - laneWidth / 2;
-      const len = random(opts.carLightsLength);
-      const radius = random(opts.carLightsRadius);
-      const geo = new THREE.CylinderGeometry(radius, radius, len, 6);
-      const color = colors.rightCars![Math.floor(Math.random() * colors.rightCars!.length)];
+    // Right road — same direction (moving away, z decreases)
+    for (let i = 0; i < lightPairsPerRoadWay; i++) {
+      const lane = Math.floor(Math.random() * lanesPerRoad);
+      const xPos = roadX - lane * laneW - laneW / 2;
+      const trailLen = rnd(carLightsLength);
+      const radius = rnd(carLightsRadius);
+      const color = (colors.rightCars as number[])[Math.floor(Math.random() * (colors.rightCars as number[]).length)];
+
+      const geo = new THREE.CylinderGeometry(radius, radius * 0.3, trailLen, 6);
       const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.x = Math.PI / 2;
-      mesh.position.set(x, 0.05, z);
+
+      const startZ = -Math.random() * length;
+      mesh.position.set(xPos, 0.05, startZ);
       this.scene.add(mesh);
-      this.carInstances.push({
+
+      this.cars.push({
         mesh,
-        speed: random(opts.movingAwaySpeed),
-        progress: Math.random(),
-        offset: z,
-        laneIndex: lane,
+        speed: -rnd(movingAwaySpeed), // negative = moves toward -z
+        z: startZ,
+        xPos,
         side: 'right',
       });
     }
-
-    this.leftCarLights = this.carInstances[0].mesh; // placeholder
-    this.rightCarLights = this.carInstances[opts.lightPairsPerRoadWay].mesh; // placeholder
   }
 
-  private buildSideSticks() {
-    const opts = this.options;
-    const stickColor = new THREE.Color(opts.colors.sticks);
-    const roadX = opts.roadWidth / 2 + opts.islandWidth / 2 + 0.5;
-
-    for (let i = 0; i < opts.totalSideLightSticks; i++) {
-      const progress = i / opts.totalSideLightSticks;
-      const z = -progress * opts.length;
-      const height = random(opts.lightStickHeight);
-      const geo = new THREE.CylinderGeometry(0.03, 0.03, height, 4);
-      const mat = new THREE.MeshBasicMaterial({
-        color: stickColor,
-        transparent: true,
-        opacity: 0.6,
-      });
-
-      // Left stick
-      const left = new THREE.Mesh(geo.clone(), mat.clone());
-      left.position.set(-roadX, height / 2, z);
-      this.scene.add(left);
-
-      // Right stick
-      const right = new THREE.Mesh(geo.clone(), mat.clone());
-      right.position.set(roadX, height / 2, z);
-      this.scene.add(right);
-    }
-    this.leftSticks = new THREE.InstancedMesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial(), 1);
-    this.rightSticks = this.leftSticks;
-  }
-
-  private buildPostProcessing() {
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(new RenderPass(this.scene, this.camera));
-    const bloom = new BloomEffect({ intensity: 1.2, luminanceThreshold: 0.1, luminanceSmoothing: 0.3 });
-    const smaa = new SMAAEffect({ preset: SMAAPreset.LOW });
-    this.composer.addPass(new EffectPass(this.camera, bloom, smaa));
-  }
-
-  private addEventListeners(container: HTMLElement) {
-    const onMouseDown = () => {
-      this.speedUpTarget = this.options.speedUp;
-      this.options.onSpeedUp?.();
+  private addListeners(container: HTMLElement) {
+    const speedUp = () => {
+      this.speedMultiplier = this.opts.speedUp;
+      this.opts.onSpeedUp?.();
     };
-    const onMouseUp = () => {
-      this.speedUpTarget = 0;
-      this.options.onSlowDown?.();
+    const slowDown = () => {
+      this.speedMultiplier = 1;
+      this.opts.onSlowDown?.();
     };
-    container.addEventListener('mousedown', onMouseDown);
-    container.addEventListener('mouseup', onMouseUp);
-    container.addEventListener('touchstart', onMouseDown, { passive: true });
-    container.addEventListener('touchend', onMouseUp);
+    container.addEventListener('mousedown', speedUp);
+    container.addEventListener('mouseup', slowDown);
+    container.addEventListener('touchstart', speedUp, { passive: true });
+    container.addEventListener('touchend', slowDown);
 
     const onResize = () => {
-      this.camera.aspect = container.clientWidth / container.clientHeight;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
-      this.renderer.setSize(container.clientWidth, container.clientHeight);
-      this.composer.setSize(container.clientWidth, container.clientHeight);
+      this.renderer.setSize(w, h);
+      this.composer.setSize(w, h);
     };
     window.addEventListener('resize', onResize);
   }
 
+  // ── Animation loop ────────────────────────────────────────────────────────
+
   private animate = () => {
     if (this.disposed) return;
-    this.animId = requestAnimationFrame(this.animate);
+    this.rafId = requestAnimationFrame(this.animate);
 
-    const delta = this.clock.getDelta();
-    this.timeOffset += delta;
-    const time = this.timeOffset;
+    const now = performance.now();
+    // Cap delta at 100ms to avoid huge jumps after tab switch
+    const delta = Math.min((now - this.lastTime) / 1000, 0.1);
+    this.lastTime = now;
+    this.timeElapsed += delta;
 
-    // Smooth speed up
-    this.speedUp = lerp(this.speedUp, this.speedUpTarget, delta * 2);
-    const currentFov = lerp(this.options.fov, this.options.fovSpeedUp, this.speedUp / this.options.speedUp);
-    this.camera.fov = currentFov;
-    this.camera.updateProjectionMatrix();
+    const t = this.timeElapsed;
+    const speed = this.speedMultiplier;
 
-    // Move car light trails
-    this.carInstances.forEach((car) => {
-      car.progress += delta * (Math.abs(car.speed) / this.options.length) * (1 + this.speedUp);
-      if (car.progress > 1) car.progress = 0;
-      const z = -car.progress * this.options.length;
-      car.mesh.position.z = z;
-      (car.mesh.material as THREE.MeshBasicMaterial).opacity = Math.min(0.9, car.progress * 3);
+    // ── Move car light trails ──────────────────────────────────────────────
+    this.cars.forEach((car) => {
+      car.z += car.speed * speed * delta;
+
+      // Wrap around
+      if (car.side === 'left' && car.z > 8) {
+        car.z = -this.opts.length;
+      } else if (car.side === 'right' && car.z < -this.opts.length) {
+        car.z = 0;
+      }
+
+      car.mesh.position.z = car.z;
+
+      // Fade in near camera, fade at far end
+      const distFromCam = Math.abs(car.z);
+      const alpha = Math.min(1, Math.max(0.1, 1 - distFromCam / (this.opts.length * 0.85)));
+      (car.mesh.material as THREE.MeshBasicMaterial).opacity = alpha * (car.side === 'left' ? 0.9 : 0.8);
     });
 
-    // Apply camera distortion
-    const distOffset = this.distortion.getJS(0.02, time);
-    this.camera.position.set(distOffset.x * 0.02, 1.5 + distOffset.y * 0.02, 5);
-    this.camera.lookAt(distOffset.x * 0.01, distOffset.y * 0.01, -5);
+    // ── Camera gentle sway (road distortion effect) ────────────────────────
+    const swayX = Math.sin(t * 0.3) * 0.15;
+    const swayY = Math.cos(t * 0.2) * 0.08 + 2;
+    this.camera.position.set(swayX, swayY, 6);
+    this.camera.lookAt(swayX * 0.3, 0.5, -20);
+
+    // ── Smooth FOV for speedup ─────────────────────────────────────────────
+    const targetFov = speed > 1 ? this.opts.fovSpeedUp : this.opts.fov;
+    this.camera.fov += (targetFov - this.camera.fov) * 0.05;
+    this.camera.updateProjectionMatrix();
 
     this.composer.render(delta);
   };
 
   public dispose() {
     this.disposed = true;
-    cancelAnimationFrame(this.animId);
+    cancelAnimationFrame(this.rafId);
     this.renderer.dispose();
     this.composer.dispose();
   }
@@ -447,23 +374,17 @@ class HyperspeedApp {
 
 interface HyperspeedProps {
   effectOptions?: HyperspeedOptions;
-  className?: string;
 }
 
-export default function Hyperspeed({ effectOptions = f1RedBullPreset, className }: HyperspeedProps) {
+export default function Hyperspeed({ effectOptions = f1RedBullPreset }: HyperspeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<HyperspeedApp | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Clean up any existing app
-    if (appRef.current) {
-      appRef.current.dispose();
-      appRef.current = null;
-    }
-
-    // Clear DOM children
+    // Clean up existing
+    appRef.current?.dispose();
     const container = containerRef.current;
     while (container.firstChild) container.removeChild(container.firstChild);
 
@@ -473,14 +394,19 @@ export default function Hyperspeed({ effectOptions = f1RedBullPreset, className 
       appRef.current?.dispose();
       appRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div
       ref={containerRef}
-      className={className}
-      style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'absolute', inset: 0 }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}
     />
   );
 }

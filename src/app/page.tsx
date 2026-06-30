@@ -11,14 +11,11 @@ import ProjectsSection from '@/components/ProjectsSection';
 import OpenSourceSection from '@/components/OpenSourceSection';
 import FooterSection from '@/components/FooterSection';
 
-// Hyperspeed background — SSR-safe via dynamic import
 const HyperspeedBackground = dynamic(
   () => import('@/components/HyperspeedBackground'),
   {
     ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 z-0" style={{ background: '#000' }} />
-    ),
+    loading: () => <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: '#000' }} />,
   }
 );
 
@@ -26,82 +23,71 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const mainRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const techRef = useRef<HTMLDivElement>(null);
-  const projectsRef = useRef<HTMLDivElement>(null);
-  const openSourceRef = useRef<HTMLDivElement>(null);
-  const footerRef = useRef<HTMLDivElement>(null);
+
+  const mainRef        = useRef<HTMLDivElement>(null);
+  const heroRef        = useRef<HTMLDivElement>(null);
+  const techRef        = useRef<HTMLDivElement>(null);
+  const projectsRef    = useRef<HTMLDivElement>(null);
+  const openSourceRef  = useRef<HTMLDivElement>(null);
+  const footerRef      = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // ── Master scroll tracker ───────────────────────────────────────────
+
+      // ── Master progress tracker (drives throttle / speed gauges) ──────────
       ScrollTrigger.create({
         trigger: mainRef.current,
         start: 'top top',
         end: 'bottom bottom',
-        scrub: 1,
+        scrub: true,
         onUpdate: (self) => setScrollProgress(self.progress),
       });
 
-      // ── Hero: fade/lift out as user scrolls away ────────────────────────
+      // ── Hero: fade + lift out ──────────────────────────────────────────────
       if (heroRef.current) {
         gsap.to(heroRef.current, {
           opacity: 0,
-          y: -100,
-          scale: 0.96,
+          y: -80,
+          ease: 'none',
           scrollTrigger: {
             trigger: heroRef.current,
             start: 'top top',
             end: 'bottom top',
-            scrub: 1.2,
+            scrub: 1,
           },
         });
       }
 
-      // ── Garage sections: slide in from alternating sides ────────────────
-      const sections = [
-        { ref: techRef,       fromX: -80 },
-        { ref: projectsRef,   fromX:  80 },
-        { ref: openSourceRef, fromX: -80 },
+      // ── Garage sections: animate IN only (start visible, slide from side) ──
+      const garageSections = [
+        { ref: techRef,       fromX: -60 },
+        { ref: projectsRef,   fromX:  60 },
+        { ref: openSourceRef, fromX: -60 },
         { ref: footerRef,     fromX:   0 },
       ];
 
-      sections.forEach(({ ref, fromX }) => {
+      garageSections.forEach(({ ref, fromX }) => {
         if (!ref.current) return;
 
-        // Entrance
-        gsap.fromTo(
-          ref.current,
-          { opacity: 0, x: fromX, y: 40, scale: 0.96 },
-          {
-            opacity: 1, x: 0, y: 0, scale: 1,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: ref.current,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 1.2,
-            },
-          }
-        );
+        // Set initial state via CSS so it doesn't flicker
+        gsap.set(ref.current, { opacity: 0, x: fromX, y: 30 });
 
-        // Exit (fade out upward)
-        gsap.fromTo(
-          ref.current,
-          { opacity: 1, y: 0 },
-          {
-            opacity: 0,
-            y: -60,
-            scrollTrigger: {
-              trigger: ref.current,
-              start: 'bottom 45%',
-              end: 'bottom 5%',
-              scrub: 1,
-            },
-          }
-        );
+        // Animate in on scroll
+        gsap.to(ref.current, {
+          opacity: 1,
+          x: 0,
+          y: 0,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ref.current,
+            start: 'top 88%',
+            end: 'top 40%',
+            scrub: 1,
+            toggleActions: 'play none none reverse',
+          },
+        });
       });
+
     }, mainRef);
 
     return () => ctx.revert();
@@ -109,68 +95,95 @@ export default function Home() {
 
   return (
     <>
-      {/* ── Hyperspeed racing track background ── */}
+      {/* ── Fixed racing background ─── */}
       <HyperspeedBackground />
 
-      {/* ── Scroll container (500vh runway) ── */}
+      {/* ── Scroll runway (500vh) ─── */}
       <div
         ref={mainRef}
         style={{ position: 'relative', zIndex: 10, height: '500vh' }}
       >
-        {/* ── 01: The Starting Grid ── */}
-        <section
+
+        {/* 01 — Starting Grid (sticky hero) */}
+        <div
           ref={heroRef}
           style={{
             height: '100vh',
+            position: 'sticky',
+            top: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            position: 'sticky',
-            top: 0,
+            overflow: 'hidden',
           }}
         >
           <HeroSection scrollProgress={scrollProgress} />
-        </section>
+        </div>
 
-        <div style={{ height: '25vh' }} />
+        <div style={{ height: '30vh' }} />
 
-        {/* ── 02: The Car Architecture ── */}
-        <section
+        {/* 02 — Car Architecture */}
+        <div
           ref={techRef}
-          style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 16px',
+          }}
         >
           <TechStackSection />
-        </section>
+        </div>
 
-        <div style={{ height: '15vh' }} />
+        <div style={{ height: '20vh' }} />
 
-        {/* ── 03: The Track Record ── */}
-        <section
+        {/* 03 — Track Record */}
+        <div
           ref={projectsRef}
-          style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 16px',
+          }}
         >
           <ProjectsSection />
-        </section>
+        </div>
+
+        <div style={{ height: '20vh' }} />
+
+        {/* 04 — Constructor Collaborations */}
+        <div
+          ref={openSourceRef}
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 16px',
+          }}
+        >
+          <OpenSourceSection />
+        </div>
 
         <div style={{ height: '15vh' }} />
 
-        {/* ── 04: Constructor Collaborations ── */}
-        <section
-          ref={openSourceRef}
-          style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
-        >
-          <OpenSourceSection />
-        </section>
-
-        <div style={{ height: '10vh' }} />
-
-        {/* ── 05: The Pit Wall ── */}
-        <section
+        {/* 05 — Pit Wall */}
+        <div
           ref={footerRef}
-          style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px 64px' }}
+          style={{
+            minHeight: '60vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 16px 80px',
+          }}
         >
           <FooterSection />
-        </section>
+        </div>
+
       </div>
     </>
   );
