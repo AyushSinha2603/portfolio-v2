@@ -4,9 +4,9 @@ import { forwardRef } from 'react';
 import { GitFork, Globe, Mail, FileDown } from 'lucide-react';
 
 const socialLinks = [
-  { href: '#github', label: 'GitHub', icon: GitFork },
-  { href: '#linkedin', label: 'LinkedIn', icon: Globe },
-  { href: 'mailto:hello@ayush.dev', label: 'Email', icon: Mail },
+  { href: 'https://github.com/AyushSinha2603', label: 'GitHub', icon: GitFork },
+  { href: 'https://www.linkedin.com/in/ayush-sinha-70046a319/', label: 'LinkedIn', icon: Globe },
+  { href: 'mailto:ayushcodes26@gmail.com', label: 'Email', icon: Mail },
 ] as const;
 
 const FooterSection = forwardRef<HTMLDivElement>((_, ref) => {
@@ -31,6 +31,8 @@ const FooterSection = forwardRef<HTMLDivElement>((_, ref) => {
             <a
               key={label}
               href={href}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-lg border border-[var(--glass-border)] px-6 py-3 text-silver transition-colors duration-200 hover:border-white hover:text-white"
             >
               <Icon className="h-4 w-4" />
@@ -39,14 +41,23 @@ const FooterSection = forwardRef<HTMLDivElement>((_, ref) => {
           ))}
         </div>
 
-        {/* Download resume */}
-        <div className="mt-8">
+        {/* Resume Actions */}
+        <div className="mt-8 flex items-center justify-center gap-4">
           <a
-            href="#resume"
+            href="/resume/123CE0125_AyushSinha.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="font-headline inline-flex items-center gap-2 rounded-full bg-redbull-red px-8 py-3 font-semibold tracking-wide text-white transition-[filter] duration-200 hover:brightness-110"
           >
             <FileDown className="h-4 w-4" />
-            Download Resume
+            View Resume
+          </a>
+          <a
+            href="/resume/123CE0125_AyushSinha.pdf"
+            download="Ayush_Sinha_Resume.pdf"
+            className="font-headline inline-flex items-center gap-2 rounded-full border border-redbull-red px-6 py-3 font-semibold tracking-wide text-redbull-red transition-colors duration-200 hover:bg-redbull-red hover:text-white"
+          >
+            Download
           </a>
         </div>
 
