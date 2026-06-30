@@ -10,117 +10,123 @@ import {
   SMAAEffect,
   SMAAPreset,
 } from 'postprocessing';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { GLTFLoader } from 'three-stdlib';
 
 export interface HyperspeedOptions {
   onSpeedUp?: () => void;
   onSlowDown?: () => void;
-  length?: number;
   roadWidth?: number;
-  islandWidth?: number;
   lanesPerRoad?: number;
   fov?: number;
-  fovSpeedUp?: number;
-  speedUp?: number;
-  totalSideLightSticks?: number;
-  lightPairsPerRoadWay?: number;
-  movingAwaySpeed?: [number, number];
-  movingCloserSpeed?: [number, number];
-  carLightsLength?: [number, number];
-  carLightsRadius?: [number, number];
+  baseSpeed?: number;      // units / second at normal pace
+  boostSpeed?: number;     // multiplier on mouse-hold
+  lightStreakCount?: number;
+  sideStickCount?: number;
   colors?: {
-    roadColor?: number;
-    islandColor?: number;
-    background?: number;
-    leftCars?: number[];
-    rightCars?: number[];
-    sticks?: number;
+    road?: number;
+    island?: number;
+    sky?: number;
+    leftStreaks?: number[]; // oncoming (toward camera)
+    rightStreaks?: number[]; // going away
+    sideSticks?: number;
+    shoulderLine?: number;
   };
 }
 
-// ─── F1 Red Bull Preset ───────────────────────────────────────────────────────
-
 export const f1RedBullPreset: HyperspeedOptions = {
-  length: 400,
-  roadWidth: 9,
-  islandWidth: 2,
+  roadWidth: 12,
   lanesPerRoad: 3,
-  fov: 90,
-  fovSpeedUp: 130,
-  speedUp: 2,
-  totalSideLightSticks: 20,
-  lightPairsPerRoadWay: 50,
-  movingAwaySpeed: [70, 100],
-  movingCloserSpeed: [130, 180],
-  carLightsLength: [15, 100],
-  carLightsRadius: [0.06, 0.16],
+  fov: 85,
+  baseSpeed: 60,
+  boostSpeed: 3,
+  lightStreakCount: 80,
+  sideStickCount: 30,
   colors: {
-    roadColor: 0x0a0a0a,
-    islandColor: 0x080808,
-    background: 0x000000,
-    leftCars: [0xdc0000, 0xff2200, 0xbb0000],   // Red — oncoming
-    rightCars: [0x1b1464, 0x3366ff, 0x0044cc],  // Blue — away
-    sticks: 0xdc0000,
+    road: 0x080808,
+    island: 0x050505,
+    sky: 0x000000,
+    leftStreaks:  [0xdc0000, 0xff1100, 0xcc0000, 0xff3300],
+    rightStreaks: [0x1b1464, 0x2244cc, 0x0033ff, 0x334488],
+    sideSticks: 0xdc0000,
+    shoulderLine: 0x1b1464,
   },
 };
 
-// ─── Random helper ────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const rnd = ([min, max]: [number, number]) => min + Math.random() * (max - min);
+const rnd = (min: number, max: number) => min + Math.random() * (max - min);
+const pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
 
-// ─── Main App class ───────────────────────────────────────────────────────────
+// ─── Road chunk system ────────────────────────────────────────────────────────
 
-interface CarInstance {
+const CHUNK_LEN  = 40;   // length of one road tile
+const CHUNK_CNT  = 20;   // number of tiles kept in scene
+const ROAD_DEPTH = CHUNK_LEN * CHUNK_CNT;   // total road depth
+
+interface LightStreak {
   mesh: THREE.Mesh;
-  speed: number;   // units/sec
-  z: number;       // current z
-  xPos: number;
+  speed: number;      // units/sec, positive = toward camera (+z), negative = away (-z)
+  z: number;
+  lane: number;
   side: 'left' | 'right';
 }
 
+interface SideStick {
+  left: THREE.Mesh;
+  right: THREE.Mesh;
+  z: number;
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
 class HyperspeedApp {
-  private opts: Required<HyperspeedOptions>;
+  private opts: Required<HyperspeedOptions> & { colors: Required<NonNullable<HyperspeedOptions['colors']>> };
   private renderer: THREE.WebGLRenderer;
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private composer: EffectComposer;
-  private cars: CarInstance[] = [];
-  private stickMeshes: THREE.Mesh[] = [];
 
+  // Road chunks (recycled)
+  private roadChunks: THREE.Group[] = [];
+  private roadScrollZ = 0;        // how far the road has scrolled (accumulates)
+
+  // Light streaks
+  private streaks: LightStreak[] = [];
+
+  // Side sticks
+  private sideSticks: SideStick[] = [];
+  private sticksScrollZ = 0;
+
+  // F1 Car
+  private f1Car: THREE.Group | null = null;
+
+  // State
   private rafId = 0;
-  private lastTime = 0;   // ms, from performance.now()
-  private timeElapsed = 0; // seconds
+  private lastTime = 0;
+  private elapsed  = 0;
   private disposed = false;
-
-  // Interactive speedup
-  private speedMultiplier = 1;
+  private boost = 1;
 
   constructor(container: HTMLElement, opts: HyperspeedOptions) {
     const c = opts.colors ?? {};
     this.opts = {
-      onSpeedUp: opts.onSpeedUp ?? (() => {}),
-      onSlowDown: opts.onSlowDown ?? (() => {}),
-      length: opts.length ?? 400,
-      roadWidth: opts.roadWidth ?? 9,
-      islandWidth: opts.islandWidth ?? 2,
-      lanesPerRoad: opts.lanesPerRoad ?? 3,
-      fov: opts.fov ?? 90,
-      fovSpeedUp: opts.fovSpeedUp ?? 130,
-      speedUp: opts.speedUp ?? 2,
-      totalSideLightSticks: opts.totalSideLightSticks ?? 20,
-      lightPairsPerRoadWay: opts.lightPairsPerRoadWay ?? 50,
-      movingAwaySpeed: opts.movingAwaySpeed ?? [70, 100],
-      movingCloserSpeed: opts.movingCloserSpeed ?? [130, 180],
-      carLightsLength: opts.carLightsLength ?? [15, 100],
-      carLightsRadius: opts.carLightsRadius ?? [0.06, 0.16],
+      onSpeedUp:        opts.onSpeedUp ?? (() => {}),
+      onSlowDown:       opts.onSlowDown ?? (() => {}),
+      roadWidth:        opts.roadWidth       ?? 12,
+      lanesPerRoad:     opts.lanesPerRoad    ?? 3,
+      fov:              opts.fov             ?? 85,
+      baseSpeed:        opts.baseSpeed       ?? 60,
+      boostSpeed:       opts.boostSpeed      ?? 3,
+      lightStreakCount: opts.lightStreakCount ?? 80,
+      sideStickCount:   opts.sideStickCount  ?? 30,
       colors: {
-        roadColor: c.roadColor ?? 0x0a0a0a,
-        islandColor: c.islandColor ?? 0x080808,
-        background: c.background ?? 0x000000,
-        leftCars: c.leftCars ?? [0xdc0000, 0xff2200, 0xbb0000],
-        rightCars: c.rightCars ?? [0x1b1464, 0x3366ff, 0x0044cc],
-        sticks: c.sticks ?? 0xdc0000,
+        road:         c.road         ?? 0x080808,
+        island:       c.island       ?? 0x050505,
+        sky:          c.sky          ?? 0x000000,
+        leftStreaks:  c.leftStreaks  ?? [0xdc0000, 0xff1100],
+        rightStreaks: c.rightStreaks ?? [0x1b1464, 0x2244cc],
+        sideSticks:   c.sideSticks  ?? 0xdc0000,
+        shoulderLine: c.shoulderLine ?? 0x1b1464,
       },
     };
 
@@ -132,181 +138,278 @@ class HyperspeedApp {
 
     // Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(this.opts.colors.background ?? 0x000000);
-    this.scene.fog = new THREE.Fog(this.opts.colors.background ?? 0x000000, 50, 300);
+    this.scene.background = new THREE.Color(this.opts.colors.sky);
+    this.scene.fog = new THREE.Fog(this.opts.colors.sky, 80, 350);
 
-    // Camera
+    // Camera — driver's eye, low and looking forward along -Z axis
     this.camera = new THREE.PerspectiveCamera(
       this.opts.fov,
       container.clientWidth / container.clientHeight,
       0.1,
       600
     );
-    this.camera.position.set(0, 2, 6);
-    this.camera.lookAt(0, 0.5, -10);
+    // Camera sits at z=0, looking into the -z tunnel
+    this.camera.position.set(0, 2.5, 0);
+    this.camera.lookAt(0, 1.8, -100);
 
     // Post-processing
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    const bloom = new BloomEffect({
-      intensity: 1.6,
-      luminanceThreshold: 0.08,
-      luminanceSmoothing: 0.25,
-    });
-    const smaa = new SMAAEffect({ preset: SMAAPreset.LOW });
+    const bloom = new BloomEffect({ intensity: 2.2, luminanceThreshold: 0.05, luminanceSmoothing: 0.3 });
+    const smaa  = new SMAAEffect({ preset: SMAAPreset.LOW });
     this.composer.addPass(new EffectPass(this.camera, bloom, smaa));
 
-    this.buildScene();
+    this.buildRoad();
+    this.buildStreaks();
+    this.buildSideSticks();
     this.addListeners(container);
+
+    // Load F1 Car
+    const loader = new GLTFLoader();
+    loader.load('/models/f1car-transformed.glb', (gltf) => {
+      this.f1Car = gltf.scene;
+      
+      // Position car centrally on the road in front of camera
+      this.f1Car.position.set(0, 0, -6);
+      
+      // Face forward (down the -Z axis) and scale to track
+      this.f1Car.rotation.set(0, Math.PI, 0); 
+      this.f1Car.scale.set(0.65, 0.65, 0.65);
+      
+      this.scene.add(this.f1Car);
+    });
+
     this.lastTime = performance.now();
     this.animate();
   }
 
-  // ── Build static scene elements ─────────────────────────────────────────────
+  // ── Road: scrolling chunks ────────────────────────────────────────────────
 
-  private buildScene() {
-    const { length, roadWidth, islandWidth, colors } = this.opts;
-    const L = length;
-    const totalW = roadWidth * 2 + islandWidth;
-
-    // Ground / island strip
-    const groundGeo = new THREE.PlaneGeometry(totalW + 16, L);
-    const ground = new THREE.Mesh(
-      groundGeo,
-      new THREE.MeshBasicMaterial({ color: colors.islandColor ?? 0x080808 })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.set(0, -0.02, -L / 2);
-    this.scene.add(ground);
-
-    // Left road lane
-    const laneGeo = new THREE.PlaneGeometry(roadWidth, L);
-    const laneMat = new THREE.MeshBasicMaterial({ color: colors.roadColor });
-    const leftRoad = new THREE.Mesh(laneGeo, laneMat);
-    leftRoad.rotation.x = -Math.PI / 2;
-    leftRoad.position.set(-(roadWidth / 2 + islandWidth / 2), -0.01, -L / 2);
-    this.scene.add(leftRoad);
-
-    // Right road lane
-    const rightRoad = new THREE.Mesh(laneGeo.clone(), laneMat.clone());
-    rightRoad.rotation.x = -Math.PI / 2;
-    rightRoad.position.set(roadWidth / 2 + islandWidth / 2, -0.01, -L / 2);
-    this.scene.add(rightRoad);
-
-    // Center island markings (dashed)
-    for (let z = 0; z > -L; z -= 8) {
-      const dashGeo = new THREE.PlaneGeometry(0.12, 3);
-      const dash = new THREE.Mesh(
-        dashGeo,
-        new THREE.MeshBasicMaterial({ color: 0x1b1464, transparent: true, opacity: 0.5 })
-      );
-      dash.rotation.x = -Math.PI / 2;
-      dash.position.set(0, 0, z - 1.5);
-      this.scene.add(dash);
-    }
-
-    // Roadside light sticks
-    const stickColor = new THREE.Color(colors.sticks);
-    const sideX = roadWidth / 2 + islandWidth / 2 + 0.7;
-    for (let i = 0; i < this.opts.totalSideLightSticks; i++) {
-      const z = -(i / this.opts.totalSideLightSticks) * L;
-      const height = 1.2 + Math.random() * 0.6;
-      const geo = new THREE.CylinderGeometry(0.04, 0.04, height, 4);
-      const mat = new THREE.MeshBasicMaterial({ color: stickColor, transparent: true, opacity: 0.7 });
-
-      const left = new THREE.Mesh(geo.clone(), mat.clone());
-      left.position.set(-sideX, height / 2, z);
-      this.scene.add(left);
-      this.stickMeshes.push(left);
-
-      const right = new THREE.Mesh(geo.clone(), mat.clone());
-      right.position.set(sideX, height / 2, z);
-      this.scene.add(right);
-      this.stickMeshes.push(right);
-    }
-
-    // Initial car light trails
-    this.spawnCars();
+  private makeLaneMat(color: number) {
+    return new THREE.MeshBasicMaterial({ color });
   }
 
-  private spawnCars() {
-    const { length, roadWidth, islandWidth, lanesPerRoad,
-            lightPairsPerRoadWay, carLightsLength, carLightsRadius,
-            movingAwaySpeed, movingCloserSpeed, colors } = this.opts;
+  private makeRoadChunk(offsetZ: number): THREE.Group {
+    const { roadWidth, colors } = this.opts;
+    const group = new THREE.Group();
+    group.position.z = offsetZ;
 
-    const laneW = roadWidth / lanesPerRoad;
-    const roadX = roadWidth / 2 + islandWidth / 2;
+    // Road surface
+    const roadPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(roadWidth, CHUNK_LEN),
+      this.makeLaneMat(colors.road)
+    );
+    roadPlane.rotation.x = -Math.PI / 2;
+    roadPlane.position.z = -CHUNK_LEN / 2;
+    group.add(roadPlane);
 
-    // Left road — oncoming (moving toward camera, z increases to 0)
-    for (let i = 0; i < lightPairsPerRoadWay; i++) {
-      const lane = Math.floor(Math.random() * lanesPerRoad);
-      const xPos = -(roadX - lane * laneW - laneW / 2);
-      const trailLen = rnd(carLightsLength);
-      const radius = rnd(carLightsRadius);
-      const color = (colors.leftCars as number[])[Math.floor(Math.random() * (colors.leftCars as number[]).length)];
+    // Shoulder lines (left & right edges)
+    const shw = 0.18;
+    [-(roadWidth / 2 - shw / 2), roadWidth / 2 - shw / 2].forEach((x) => {
+      const sh = new THREE.Mesh(
+        new THREE.PlaneGeometry(shw, CHUNK_LEN),
+        this.makeLaneMat(colors.shoulderLine)
+      );
+      sh.rotation.x = -Math.PI / 2;
+      sh.position.set(x, 0.005, -CHUNK_LEN / 2);
+      group.add(sh);
+    });
 
-      const geo = new THREE.CylinderGeometry(radius, radius * 0.3, trailLen, 6);
-      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = Math.PI / 2;
+    // Center dashed line
+    const dashCount = 6;
+    const dashLen = CHUNK_LEN / dashCount / 2;
+    for (let i = 0; i < dashCount; i++) {
+      const d = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.1, dashLen),
+        new THREE.MeshBasicMaterial({ color: 0x222244, transparent: true, opacity: 0.6 })
+      );
+      d.rotation.x = -Math.PI / 2;
+      d.position.set(0, 0.005, -i * (CHUNK_LEN / dashCount) - dashLen / 2 - CHUNK_LEN / dashCount / 4);
+      group.add(d);
+    }
 
-      const startZ = -Math.random() * length;
-      mesh.position.set(xPos, 0.05, startZ);
-      this.scene.add(mesh);
-
-      this.cars.push({
-        mesh,
-        speed: rnd(movingCloserSpeed), // positive = moves toward +z
-        z: startZ,
-        xPos,
-        side: 'left',
+    // Red/white curb strips on both sides
+    const curbW = 0.55;
+    const curbSeg = 6;
+    for (let i = 0; i < curbSeg; i++) {
+      const cLen = CHUNK_LEN / curbSeg;
+      const cColor = i % 2 === 0 ? 0xdc0000 : 0x333333;
+      [-(roadWidth / 2 + curbW / 2), roadWidth / 2 + curbW / 2].forEach((cx) => {
+        const cb = new THREE.Mesh(
+          new THREE.PlaneGeometry(curbW, cLen * 0.9),
+          this.makeLaneMat(cColor)
+        );
+        cb.rotation.x = -Math.PI / 2;
+        cb.position.set(cx, 0.003, -i * cLen - cLen / 2);
+        group.add(cb);
       });
     }
 
-    // Right road — same direction (moving away, z decreases)
-    for (let i = 0; i < lightPairsPerRoadWay; i++) {
-      const lane = Math.floor(Math.random() * lanesPerRoad);
-      const xPos = roadX - lane * laneW - laneW / 2;
-      const trailLen = rnd(carLightsLength);
-      const radius = rnd(carLightsRadius);
-      const color = (colors.rightCars as number[])[Math.floor(Math.random() * (colors.rightCars as number[]).length)];
+    // Ground (island) beyond road
+    const gnd = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, CHUNK_LEN),
+      this.makeLaneMat(colors.island)
+    );
+    gnd.rotation.x = -Math.PI / 2;
+    gnd.position.set(0, -0.01, -CHUNK_LEN / 2);
+    group.add(gnd);
 
-      const geo = new THREE.CylinderGeometry(radius, radius * 0.3, trailLen, 6);
+    return group;
+  }
+
+  private buildRoad() {
+    for (let i = 0; i < CHUNK_CNT; i++) {
+      const chunk = this.makeRoadChunk(-i * CHUNK_LEN);
+      this.scene.add(chunk);
+      this.roadChunks.push(chunk);
+    }
+  }
+
+  private scrollRoad(delta: number, speed: number) {
+    const move = speed * delta;
+    this.roadScrollZ += move;
+
+    this.roadChunks.forEach((chunk) => {
+      chunk.position.z += move;
+      // If chunk passed the camera, teleport it to the back
+      if (chunk.position.z > CHUNK_LEN * 0.5) {
+        chunk.position.z -= CHUNK_CNT * CHUNK_LEN;
+      }
+    });
+  }
+
+  // ── Light streaks ─────────────────────────────────────────────────────────
+
+  private buildStreaks() {
+    const { roadWidth, lanesPerRoad, lightStreakCount, colors } = this.opts;
+    const laneW = roadWidth / lanesPerRoad;
+
+    // Left road (oncoming — rush TOWARD camera, so positive speed)
+    for (let i = 0; i < lightStreakCount / 2; i++) {
+      const lane  = Math.floor(Math.random() * lanesPerRoad);
+      const xBase = -(roadWidth / 2);
+      const x     = xBase + lane * laneW + laneW / 2 + rnd(-0.3, 0.3);
+      const len   = rnd(20, 80);
+      const rad   = rnd(0.05, 0.14);
+      const color = pick(colors.leftStreaks as number[]);
+
+      const geo = new THREE.CylinderGeometry(rad, rad * 0.25, len, 5);
       const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.x = Math.PI / 2;
 
-      const startZ = -Math.random() * length;
-      mesh.position.set(xPos, 0.05, startZ);
+      const z = -rnd(5, ROAD_DEPTH * 0.9);
+      mesh.position.set(x, rnd(0.1, 0.35), z);
       this.scene.add(mesh);
 
-      this.cars.push({
-        mesh,
-        speed: -rnd(movingAwaySpeed), // negative = moves toward -z
-        z: startZ,
-        xPos,
-        side: 'right',
-      });
+      this.streaks.push({ mesh, speed: rnd(120, 220), z, lane, side: 'left' });
+    }
+
+    // Right road (going away — negative speed)
+    for (let i = 0; i < lightStreakCount / 2; i++) {
+      const lane  = Math.floor(Math.random() * lanesPerRoad);
+      const xBase = roadWidth / 2;
+      const x     = xBase - lane * laneW - laneW / 2 + rnd(-0.3, 0.3);
+      const len   = rnd(15, 60);
+      const rad   = rnd(0.05, 0.12);
+      const color = pick(colors.rightStreaks as number[]);
+
+      const geo = new THREE.CylinderGeometry(rad, rad * 0.3, len, 5);
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.75 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = Math.PI / 2;
+
+      const z = -rnd(5, ROAD_DEPTH * 0.9);
+      mesh.position.set(x, rnd(0.1, 0.35), z);
+      this.scene.add(mesh);
+
+      this.streaks.push({ mesh, speed: -rnd(60, 120), z, lane, side: 'right' });
     }
   }
 
+  private updateStreaks(delta: number, speedMul: number) {
+    this.streaks.forEach((s) => {
+      s.z += s.speed * speedMul * delta;
+      s.mesh.position.z = s.z;
+
+      if (s.side === 'left' && s.z > 8) {
+        s.z = -rnd(ROAD_DEPTH * 0.3, ROAD_DEPTH * 0.95);
+        s.mesh.position.z = s.z;
+      }
+      if (s.side === 'right' && s.z < -ROAD_DEPTH * 0.95) {
+        s.z = -rnd(2, ROAD_DEPTH * 0.2);
+        s.mesh.position.z = s.z;
+      }
+
+      // Fade by distance
+      const dist = Math.abs(s.z);
+      const alpha = Math.max(0.05, Math.min(0.9, 1 - dist / (ROAD_DEPTH * 0.7)));
+      (s.mesh.material as THREE.MeshBasicMaterial).opacity = alpha * (s.side === 'left' ? 0.85 : 0.7);
+    });
+  }
+
+  // ── Side sticks (glow poles lining the road) ──────────────────────────────
+
+  private buildSideSticks() {
+    const { roadWidth, sideStickCount, colors } = this.opts;
+    const spacing = ROAD_DEPTH / sideStickCount;
+    const sideX   = roadWidth / 2 + 1.2;
+
+    for (let i = 0; i < sideStickCount; i++) {
+      const z      = -i * spacing;
+      const height = rnd(1.4, 2.2);
+      const geo    = new THREE.CylinderGeometry(0.05, 0.05, height, 5);
+      const mat    = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(colors.sideSticks),
+        transparent: true,
+        opacity: 0.8,
+      });
+
+      const left  = new THREE.Mesh(geo.clone(), mat.clone());
+      const right = new THREE.Mesh(geo.clone(), mat.clone());
+      left.position.set(-sideX, height / 2, z);
+      right.position.set(sideX, height / 2, z);
+      this.scene.add(left, right);
+
+      // Tiny glowing cap on top
+      const capGeo = new THREE.SphereGeometry(0.1, 4, 4);
+      const capMat = new THREE.MeshBasicMaterial({ color: colors.sideSticks });
+      const capL   = new THREE.Mesh(capGeo, capMat);
+      const capR   = new THREE.Mesh(capGeo.clone(), capMat.clone());
+      capL.position.set(-sideX, height, z);
+      capR.position.set(sideX, height, z);
+      this.scene.add(capL, capR);
+
+      this.sideSticks.push({ left, right, z });
+    }
+  }
+
+  private updateSideSticks(delta: number, speed: number) {
+    const move  = speed * delta;
+    this.sticksScrollZ += move;
+
+    this.sideSticks.forEach((s) => {
+      s.z += move;
+      if (s.z > 5) {
+        s.z -= ROAD_DEPTH;
+      }
+      s.left.position.z  = s.z;
+      s.right.position.z = s.z;
+    });
+  }
+
+  // ── Input ─────────────────────────────────────────────────────────────────
+
   private addListeners(container: HTMLElement) {
-    const speedUp = () => {
-      this.speedMultiplier = this.opts.speedUp;
-      this.opts.onSpeedUp?.();
-    };
-    const slowDown = () => {
-      this.speedMultiplier = 1;
-      this.opts.onSlowDown?.();
-    };
-    container.addEventListener('mousedown', speedUp);
-    container.addEventListener('mouseup', slowDown);
-    container.addEventListener('touchstart', speedUp, { passive: true });
-    container.addEventListener('touchend', slowDown);
+    const dn = () => { this.boost = this.opts.boostSpeed; this.opts.onSpeedUp?.(); };
+    const up = () => { this.boost = 1;                   this.opts.onSlowDown?.(); };
+    container.addEventListener('mousedown',  dn);
+    container.addEventListener('mouseup',    up);
+    container.addEventListener('touchstart', dn, { passive: true });
+    container.addEventListener('touchend',   up);
 
     const onResize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
+      const w = container.clientWidth, h = container.clientHeight;
       this.camera.aspect = w / h;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(w, h);
@@ -315,50 +418,56 @@ class HyperspeedApp {
     window.addEventListener('resize', onResize);
   }
 
-  // ── Animation loop ────────────────────────────────────────────────────────
+  // ── Animate ───────────────────────────────────────────────────────────────
 
   private animate = () => {
     if (this.disposed) return;
     this.rafId = requestAnimationFrame(this.animate);
 
-    const now = performance.now();
-    // Cap delta at 100ms to avoid huge jumps after tab switch
+    const now   = performance.now();
     const delta = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
-    this.timeElapsed += delta;
+    this.elapsed += delta;
 
-    const t = this.timeElapsed;
-    const speed = this.speedMultiplier;
+    const t     = this.elapsed;
+    const speed = this.opts.baseSpeed * this.boost;
 
-    // ── Move car light trails ──────────────────────────────────────────────
-    this.cars.forEach((car) => {
-      car.z += car.speed * speed * delta;
+    // Move road toward camera
+    this.scrollRoad(delta, speed);
 
-      // Wrap around
-      if (car.side === 'left' && car.z > 8) {
-        car.z = -this.opts.length;
-      } else if (car.side === 'right' && car.z < -this.opts.length) {
-        car.z = 0;
-      }
+    // Animate streaks
+    this.updateStreaks(delta, this.boost);
 
-      car.mesh.position.z = car.z;
+    // Move side sticks with road
+    this.updateSideSticks(delta, speed);
 
-      // Fade in near camera, fade at far end
-      const distFromCam = Math.abs(car.z);
-      const alpha = Math.min(1, Math.max(0.1, 1 - distFromCam / (this.opts.length * 0.85)));
-      (car.mesh.material as THREE.MeshBasicMaterial).opacity = alpha * (car.side === 'left' ? 0.9 : 0.8);
-    });
+    // Camera: gentle sinusoidal sway — road-warp illusion
+    const swayX = Math.sin(t * 0.18) * 0.35;
+    const swayY = 2.5 + Math.sin(t * 0.12) * 0.12;
+    this.camera.position.set(swayX, swayY, 0);
+    this.camera.lookAt(swayX * 0.4, 1.6, -100);
 
-    // ── Camera gentle sway (road distortion effect) ────────────────────────
-    const swayX = Math.sin(t * 0.3) * 0.15;
-    const swayY = Math.cos(t * 0.2) * 0.08 + 2;
-    this.camera.position.set(swayX, swayY, 6);
-    this.camera.lookAt(swayX * 0.3, 0.5, -20);
-
-    // ── Smooth FOV for speedup ─────────────────────────────────────────────
-    const targetFov = speed > 1 ? this.opts.fovSpeedUp : this.opts.fov;
-    this.camera.fov += (targetFov - this.camera.fov) * 0.05;
+    // FOV pulse on boost
+    const targetFov = this.boost > 1 ? this.opts.fov! + 18 : this.opts.fov!;
+    this.camera.fov += (targetFov - this.camera.fov) * 0.06;
     this.camera.updateProjectionMatrix();
+
+    // Animate F1 Car
+    if (this.f1Car) {
+      // Car sways with camera but leads slightly ahead
+      this.f1Car.position.x = swayX * 0.85;
+      // High-speed vibration
+      this.f1Car.position.y = 0.01 + Math.sin(t * 35) * 0.01 * (speed / this.opts.baseSpeed);
+      // Subtle roll when turning
+      this.f1Car.rotation.z = -swayX * 0.05;
+      
+      // Rotate wheels
+      this.f1Car.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.name.toLowerCase().includes('wheel')) {
+          child.rotation.x -= delta * speed * 0.15;
+        }
+      });
+    }
 
     this.composer.render(delta);
   };
@@ -371,7 +480,7 @@ class HyperspeedApp {
   }
 }
 
-// ─── React Component ──────────────────────────────────────────────────────────
+// ─── React component ──────────────────────────────────────────────────────────
 
 interface HyperspeedProps {
   effectOptions?: HyperspeedOptions;
@@ -379,35 +488,25 @@ interface HyperspeedProps {
 
 export default function Hyperspeed({ effectOptions = f1RedBullPreset }: HyperspeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const appRef = useRef<HyperspeedApp | null>(null);
+  const appRef       = useRef<HyperspeedApp | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    // Clean up existing
     appRef.current?.dispose();
-    const container = containerRef.current;
-    while (container.firstChild) container.removeChild(container.firstChild);
 
-    appRef.current = new HyperspeedApp(container, effectOptions);
+    const el = containerRef.current;
+    while (el.firstChild) el.removeChild(el.firstChild);
 
-    return () => {
-      appRef.current?.dispose();
-      appRef.current = null;
-    };
+    appRef.current = new HyperspeedApp(el, effectOptions);
+
+    return () => { appRef.current?.dispose(); appRef.current = null; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div
       ref={containerRef}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-      }}
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'hidden' }}
     />
   );
 }
