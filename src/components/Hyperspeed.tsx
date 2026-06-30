@@ -174,11 +174,11 @@ class HyperspeedApp {
 
     // Neon Rim Lights to match the track (Red on left, Blue on right)
     const leftRedLight = new THREE.PointLight(0xdc0000, 50, 20);
-    leftRedLight.position.set(-3, 1, -4);
+    leftRedLight.position.set(-3, 1, -6);
     this.scene.add(leftRedLight);
 
     const rightBlueLight = new THREE.PointLight(0x0044cc, 50, 20);
-    rightBlueLight.position.set(3, 1, -4);
+    rightBlueLight.position.set(3, 1, -6);
     this.scene.add(rightBlueLight);
 
     // Load F1 Car
@@ -196,14 +196,14 @@ class HyperspeedApp {
       const maxDim = Math.max(size.x, size.y, size.z);
       
       // If max dimension is very small or large, we normalize it to roughly 7 units long
-      const targetLength = 7.5; // Made the car significantly larger
+      const targetLength = 7.0; // Slightly scaled down from 7.5 to fit frame better
       const scaleFactor = targetLength / size.z;
       
       this.f1Car.scale.set(scaleFactor, scaleFactor, scaleFactor);
       
       // Position car centrally on the road in front of camera
-      // Bring the car much closer to the camera so it looks bigger
-      this.f1Car.position.set(0, 0.05, -4.5);
+      // Pushed back to -6.5 so the rear doesn't clip the camera/screen edges
+      this.f1Car.position.set(0, 0.05, -6.5);
       
       // Face forward (down the -Z axis)
       this.f1Car.rotation.set(0, Math.PI, 0); 
