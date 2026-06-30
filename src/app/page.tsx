@@ -52,35 +52,8 @@ export default function Home() {
         },
       });
 
-      // ── Garage sections: animate IN only (start visible, slide from side) ──
-      const garageSections = [
-        { ref: techRef,       fromX: -60 },
-        { ref: projectsRef,   fromX:  60 },
-        { ref: openSourceRef, fromX: -60 },
-        { ref: footerRef,     fromX:   0 },
-      ];
-
-      garageSections.forEach(({ ref, fromX }) => {
-        if (!ref.current) return;
-
-        // Animate in on scroll using gsap.fromTo (immune to React Strict Mode double-fire bugs)
-        gsap.fromTo(
-          ref.current,
-          { opacity: 0, x: fromX, y: 50 },
-          {
-            opacity: 1,
-            x: 0,
-            y: 0,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: ref.current,
-              start: 'top 85%',
-              end: 'top 35%',
-              scrub: 1,
-            },
-          }
-        );
-      });
+      // Garage sections (Tech, Projects, Open Source) now scroll naturally without JS animations
+      // to ensure maximum visibility and no ScrollTrigger conflicts.
 
     }, mainRef);
 
