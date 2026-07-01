@@ -116,7 +116,7 @@ function ContributionGrid() {
 const OpenSourceSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="open-source">
-      <section className="glass-panel mx-auto max-w-4xl p-8">
+      <section className="glass-panel mx-auto max-w-2xl p-4 md:p-6 max-h-[55vh] md:max-h-[65vh] overflow-y-auto scrollbar-hide">
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 04

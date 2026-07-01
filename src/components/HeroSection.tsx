@@ -219,6 +219,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
           {/* Central glassmorphic card */}
           <div
+            className="max-h-[55vh] overflow-y-auto md:max-h-none md:overflow-visible scrollbar-hide"
             style={{
               position: 'relative',
               zIndex: 1,
@@ -330,38 +331,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
             </div>
           </div>
 
-          {/* Scroll cue */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 32,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <ChevronDown
-              style={{
-                width: 18,
-                height: 18,
-                color: 'rgba(255,255,255,0.22)',
-                animation: 'bounce 2s infinite',
-              }}
-            />
-            <span
-              style={{
-                fontFamily: 'var(--font-mono, monospace)',
-                fontSize: 9,
-                letterSpacing: '0.35em',
-                color: 'rgba(255,255,255,0.2)',
-              }}
-            >
-              SCROLL TO START
-            </span>
-          </div>
         </div>
       </>
     );
