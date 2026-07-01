@@ -133,7 +133,7 @@ function ProjectCard({ project }: { project: Project }) {
 const ProjectsSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="projects">
-      <section className="glass-panel mx-auto max-w-2xl p-4 md:p-6 max-h-[55vh] md:max-h-[65vh] overflow-y-auto scrollbar-hide">
+      <section className="glass-panel mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 03

@@ -75,7 +75,7 @@ export default function Home() {
           ref={heroRef}
           className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0 overflow-hidden"
         >
-          <div className="w-full md:max-w-[35vw]">
+          <div className="w-full md:max-w-[40vw]">
             <HeroSection scrollProgress={scrollProgress} />
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function Home() {
           ref={techRef}
           className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0"
         >
-          <div className="w-full md:max-w-[35vw]">
+          <div className="w-full md:max-w-[40vw]">
             <TechStackSection />
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function Home() {
           ref={projectsRef}
           className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0"
         >
-          <div className="w-full md:max-w-[35vw]">
+          <div className="w-full md:max-w-[40vw]">
             <ProjectsSection />
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function Home() {
           ref={openSourceRef}
           className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0"
         >
-          <div className="w-full md:max-w-[35vw]">
+          <div className="w-full md:max-w-[40vw]">
             <OpenSourceSection />
           </div>
         </div>
