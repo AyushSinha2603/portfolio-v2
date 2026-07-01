@@ -41,7 +41,9 @@ function RoleBadge({ role }: { role: 'Contributor' | 'Maintainer' }) {
 
 function ContributionCard({ contribution }: { contribution: Contribution }) {
   return (
-    <div className="rounded-lg border border-[var(--glass-border)] bg-carbon-light p-5">
+    <div className="glass-card p-5 relative overflow-hidden group">
+      {/* Subtle hover gradient accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[rgba(34,197,94,0.03)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -116,7 +118,7 @@ function ContributionGrid() {
 const OpenSourceSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="open-source">
-      <section className="glass-panel mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
+      <section className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 04

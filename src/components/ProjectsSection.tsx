@@ -91,7 +91,9 @@ function PositionBadge({ position }: { position: string }) {
 
 function ProjectCard({ project }: { project: Project }) {
   return (
-    <div className="rounded-lg border border-[var(--glass-border)] bg-carbon-light p-6">
+    <div className="glass-card p-6 relative overflow-hidden group">
+      {/* Subtle hover gradient accent */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(27,20,100,0.03)] to-[rgba(220,0,0,0.03)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       <div className="flex items-start gap-4">
         <PositionBadge position={project.position} />
         <div className="min-w-0 flex-1">
@@ -133,7 +135,7 @@ function ProjectCard({ project }: { project: Project }) {
 const ProjectsSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="projects">
-      <section className="glass-panel mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
+      <section className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 03

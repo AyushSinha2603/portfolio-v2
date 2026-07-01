@@ -23,7 +23,9 @@ const backendStack: TechCard[] = [
 
 function TechCardItem({ tech }: { tech: TechCard }) {
   return (
-    <div className="rounded-lg border border-[var(--glass-border)] bg-carbon-light p-4">
+    <div className="glass-card p-4 relative overflow-hidden group">
+      {/* Subtle hover gradient accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[rgba(220,0,0,0.03)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <h4 className="font-headline text-lg text-titanium">{tech.name}</h4>
       <p className="mt-1 text-sm text-silver" style={{ fontFamily: 'var(--font-body)' }}>
         {tech.description}
@@ -44,7 +46,7 @@ function TechCardItem({ tech }: { tech: TechCard }) {
 const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="tech-stack">
-      <section className="glass-panel mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
+      <section className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 02
