@@ -131,7 +131,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         </span>
         <span style={{ fontSize: 9, color: '#ffffff' }}>{rpm.toLocaleString()} RPM</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
