@@ -170,7 +170,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
             whileInView={{ x: 0, y: 0, opacity: 1, skewX: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             viewport={{ once: false, amount: 0.2 }}
-            className="mobile-no-animate max-h-[55vh] overflow-y-auto md:max-h-none md:overflow-visible scrollbar-hide"
+            className="mobile-no-animate scrollbar-hide"
             style={{
               position: 'relative',
               zIndex: 1,

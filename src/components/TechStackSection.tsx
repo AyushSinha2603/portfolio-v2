@@ -59,7 +59,7 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
         whileInView={{ x: 0, y: 0, opacity: 1, skewX: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         viewport={{ once: false, amount: 0 }}
-        className="mobile-no-animate glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide"
+        className="mobile-no-animate glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 scrollbar-hide"
       >
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
