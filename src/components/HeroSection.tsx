@@ -135,65 +135,6 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
   );
 }
 
-// ─── Speed Readout (fixed bottom-left) ───────────────────────────────────────
-function SpeedBadge() {
-  const [speed, setSpeed] = useState(0);
-  const target = useRef(0);
-  const raf = useRef(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      target.current = Math.min(342, Math.round(Math.abs(window.scrollY) * 0.12));
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    const tick = () => {
-      setSpeed((prev) => {
-        const diff = target.current - prev;
-        return Math.abs(diff) < 0.5 ? target.current : prev + diff * 0.1;
-      });
-      raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      cancelAnimationFrame(raf.current);
-    };
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ x: -150, opacity: 0, skewX: -15 }}
-      animate={{ x: 0, opacity: 1, skewX: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      style={{
-        position: 'fixed',
-        bottom: 24,
-        left: 24,
-        zIndex: 100,
-        fontFamily: 'var(--font-mono, monospace)',
-        background: 'rgba(6,6,10,0.85)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 8,
-        padding: '10px 14px',
-        minWidth: 100,
-        pointerEvents: 'none',
-      }}
-    >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#ffffff', marginBottom: 4 }}>SPEED</div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-        <span style={{ fontSize: 24, fontWeight: 700, color: '#FDD900', lineHeight: 1 }}>
-          {Math.round(speed)}
-        </span>
-        <span style={{ fontSize: 9, color: '#ffffff' }}>km/h</span>
-      </div>
-    </motion.div>
-  );
-}
-
 // ─── Main HeroSection ─────────────────────────────────────────────────────────
 interface HeroSectionProps {
   scrollProgress?: number;
@@ -205,7 +146,6 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
       <>
         {/* Fixed telemetry overlays — rendered outside the scroll flow */}
         <ThrottleGauge scrollProgress={scrollProgress} />
-        <SpeedBadge />
 
         <div ref={ref} id="hero" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
           {/* Huge watermark race number */}
@@ -338,7 +278,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                 ALL SYSTEMS GO
               </span>
               <span style={{ color: '#222' }}>|</span>
-              <span style={{ color: '#c0c0c0' }}>SEASON 2025</span>
+              <span style={{ color: '#c0c0c0' }}>SEASON 2026</span>
             </div>
           </motion.div>
 
