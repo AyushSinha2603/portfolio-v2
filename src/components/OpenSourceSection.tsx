@@ -44,9 +44,9 @@ function ContributionCard({ contribution, index }: { contribution: Contribution;
   const isEven = index % 2 === 0;
   return (
     <motion.div
-      initial={{ x: isEven ? -100 : 100, opacity: 0, skewX: isEven ? -15 : 15 }}
-      whileInView={{ x: 0, opacity: 1, skewX: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
       viewport={{ once: true, amount: 0.2 }}
       className="glass-card p-5 relative overflow-hidden group"
     >
@@ -126,7 +126,13 @@ function ContributionGrid() {
 const OpenSourceSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="open-source">
-      <section className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide">
+      <motion.section 
+        initial={{ x: -100, opacity: 0, skewX: -10 }}
+        whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        viewport={{ once: true, amount: 0.1 }}
+        className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide"
+      >
         {/* Section header */}
         <span className="font-mono text-xs tracking-[0.3em] text-redbull-red">
           SECTION 04
@@ -148,7 +154,7 @@ const OpenSourceSection = forwardRef<HTMLDivElement>((_, ref) => {
 
         {/* GitHub-style contribution grid */}
         <ContributionGrid />
-      </section>
+      </motion.section>
     </div>
   );
 });
