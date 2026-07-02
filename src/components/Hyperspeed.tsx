@@ -45,10 +45,10 @@ export const f1RedBullPreset: HyperspeedOptions = {
     road: 0x080808,
     island: 0x050505,
     sky: 0x000000,
-    leftStreaks:  [0xdc0000, 0xff1100, 0xcc0000, 0xff3300],
-    rightStreaks: [0x1b1464, 0x2244cc, 0x0033ff, 0x334488],
-    sideSticks: 0xdc0000,
-    shoulderLine: 0x1b1464,
+    leftStreaks:  [0xE30118, 0xff1100, 0xcc0000, 0xff3300], // Racing Red
+    rightStreaks: [0xFDD900, 0xffe600, 0xffcc00, 0xffd000], // Medium Yellow
+    sideSticks: 0xE30118,
+    shoulderLine: 0xFDD900, // Yellow track lines
   },
 };
 
@@ -188,12 +188,12 @@ class HyperspeedApp {
     dirLight.position.set(0, 10, -5);
     this.scene.add(dirLight);
 
-    // Neon Rim Lights to match the track (Red on left, Blue on right)
-    const leftRedLight = new THREE.PointLight(0xdc0000, 50, 20);
+    // Neon Rim Lights to match the track
+    const leftRedLight = new THREE.PointLight(0xE30118, 50, 20); // Racing Red
     leftRedLight.position.set(-3, 1, -6);
     this.scene.add(leftRedLight);
 
-    const rightBlueLight = new THREE.PointLight(0x0044cc, 50, 20);
+    const rightBlueLight = new THREE.PointLight(0x3671C6, 50, 20); // RB Navy
     rightBlueLight.position.set(3, 1, -6);
     this.scene.add(rightBlueLight);
 
@@ -232,17 +232,26 @@ class HyperspeedApp {
              color: 0x020202,
            });
            
-           // 2. Add glowing neon edges on top of the geometry
+           // 2. Add glowing neon edges on top of the geometry (Red Bull Navy + White Glow)
            const edges = new THREE.EdgesGeometry(child.geometry, 15);
-           const line = new THREE.LineSegments(
+           const lineNavy = new THREE.LineSegments(
              edges, 
              new THREE.LineBasicMaterial({ 
-               color: 0x0088ff, // Neon cyan/blue 
+               color: 0x3671C6, // Red Bull Navy
                transparent: true,
-               opacity: 0.8
+               opacity: 0.95
              })
            );
-           child.add(line);
+           const lineWhite = new THREE.LineSegments(
+             edges, 
+             new THREE.LineBasicMaterial({ 
+               color: 0xffffff, // Subtle white inner-glow to keep sharp
+               transparent: true,
+               opacity: 0.25
+             })
+           );
+           child.add(lineNavy);
+           child.add(lineWhite);
         }
       });
       
@@ -321,7 +330,7 @@ class HyperspeedApp {
     for (let i = 0; i < dashCount; i++) {
       const d = new THREE.Mesh(
         new THREE.PlaneGeometry(0.1, dashLen, 1, 4).rotateX(-Math.PI / 2),
-        this.makeLaneMat(0x222244, 0.6)
+        this.makeLaneMat(0xFDD900, 0.6) // Medium Yellow telemetry line
       );
       d.position.set(0, 0.005, -i * (CHUNK_LEN / dashCount) - dashLen / 2 - CHUNK_LEN / dashCount / 4);
       group.add(d);
@@ -332,7 +341,7 @@ class HyperspeedApp {
     const curbSeg = 6;
     for (let i = 0; i < curbSeg; i++) {
       const cLen = CHUNK_LEN / curbSeg;
-      const cColor = i % 2 === 0 ? 0xdc0000 : 0x333333;
+      const cColor = i % 2 === 0 ? 0xE30118 : 0x333333; // Racing Red
       [-(roadWidth / 2 + curbW / 2), roadWidth / 2 + curbW / 2].forEach((cx) => {
         const cb = new THREE.Mesh(
           new THREE.PlaneGeometry(curbW, cLen * 0.9, 1, 4).rotateX(-Math.PI / 2),

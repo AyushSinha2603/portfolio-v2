@@ -92,7 +92,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         background: 'rgba(6,6,10,0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: `1px solid ${isHot ? 'rgba(220,0,0,0.3)' : 'rgba(255,255,255,0.06)'}`,
+        border: `1px solid ${isHot ? 'rgba(227,1,24,0.3)' : 'rgba(255,255,255,0.06)'}`,
         borderRadius: 8,
         padding: '10px 14px',
         minWidth: 130,
@@ -100,7 +100,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         transition: 'border-color 0.3s',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#555', marginBottom: 6 }}>THROTTLE</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#c0c0c0', marginBottom: 6 }}>THROTTLE</div>
       <div
         style={{
           height: 2,
@@ -114,18 +114,18 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
           style={{
             height: '100%',
             width: `${throttle}%`,
-            background: isHot ? '#DC0000' : throttle > 40 ? '#ff6600' : '#1B1464',
+            background: isHot ? '#E30118' : throttle > 40 ? '#FDD900' : '#3671C6',
             borderRadius: 2,
             transition: 'width 0.15s ease, background 0.3s ease',
-            boxShadow: `0 0 8px ${isHot ? 'rgba(220,0,0,0.6)' : 'rgba(27,20,100,0.5)'}`,
+            boxShadow: `0 0 8px ${isHot ? 'rgba(227,1,24,0.6)' : throttle > 40 ? 'rgba(253,217,0,0.5)' : 'rgba(54,113,198,0.5)'}`,
           }}
         />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontSize: 20, fontWeight: 700, color: isHot ? '#DC0000' : '#e0e0e0', transition: 'color 0.3s' }}>
+        <span style={{ fontSize: 20, fontWeight: 700, color: isHot ? '#E30118' : '#FDD900', transition: 'color 0.3s' }}>
           {throttle}%
         </span>
-        <span style={{ fontSize: 9, color: '#555' }}>{rpm.toLocaleString()} RPM</span>
+        <span style={{ fontSize: 9, color: '#c0c0c0' }}>{rpm.toLocaleString()} RPM</span>
       </div>
     </div>
   );
@@ -176,12 +176,12 @@ function SpeedBadge() {
         pointerEvents: 'none',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#555', marginBottom: 4 }}>SPEED</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#c0c0c0', marginBottom: 4 }}>SPEED</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-        <span style={{ fontSize: 24, fontWeight: 700, color: '#e0e0e0', lineHeight: 1 }}>
+        <span style={{ fontSize: 24, fontWeight: 700, color: '#FDD900', lineHeight: 1 }}>
           {Math.round(speed)}
         </span>
-        <span style={{ fontSize: 9, color: '#555' }}>km/h</span>
+        <span style={{ fontSize: 9, color: '#c0c0c0' }}>km/h</span>
       </div>
     </div>
   );
@@ -261,10 +261,10 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               style={{
                 width: 72,
                 height: 3,
-                background: '#DC0000',
+                background: '#E30118',
                 borderRadius: 2,
                 marginTop: 18,
-                boxShadow: '0 0 14px rgba(220,0,0,0.55)',
+                boxShadow: '0 0 14px rgba(227,1,24,0.55)',
               }}
             />
 
@@ -318,16 +318,16 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
                     width: 7,
                     height: 7,
                     borderRadius: '50%',
-                    background: '#22c55e',
+                    background: '#FDD900',
                     display: 'inline-block',
-                    boxShadow: '0 0 8px rgba(34,197,94,0.7)',
+                    boxShadow: '0 0 8px rgba(253,217,0,0.7)',
                     flexShrink: 0,
                   }}
                 />
                 ALL SYSTEMS GO
               </span>
               <span style={{ color: '#222' }}>|</span>
-              <span>SEASON 2025</span>
+              <span style={{ color: '#c0c0c0' }}>SEASON 2025</span>
             </div>
           </div>
 
