@@ -29,7 +29,7 @@ function TechCardItem({ tech, index }: { tech: TechCard; index: number }) {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: false, amount: 0.2 }}
       className="glass-card p-4 relative overflow-hidden group"
     >
       {/* Subtle hover gradient accent */}
@@ -58,7 +58,7 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
         initial={{ x: -150, opacity: 0, skewX: -15 }}
         whileInView={{ x: 0, opacity: 1, skewX: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        viewport={{ once: true, amount: 0.1 }}
+        viewport={{ once: false, amount: 0.1 }}
         className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide"
       >
         {/* Section header */}
