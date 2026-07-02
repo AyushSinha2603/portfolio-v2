@@ -73,7 +73,7 @@ export default function Home() {
         {/* 01 — Starting Grid (Hero) */}
         <div
           ref={heroRef}
-          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0 overflow-hidden"
+          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0 overflow-x-hidden"
         >
           <div className="w-full md:max-w-[40vw]">
             <HeroSection scrollProgress={scrollProgress} />
@@ -85,7 +85,7 @@ export default function Home() {
         {/* 02 — Car Architecture (Tech Stack) */}
         <div
           ref={techRef}
-          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0 overflow-hidden"
+          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0 overflow-x-hidden"
         >
           <div className="w-full md:max-w-[40vw]">
             <TechStackSection />
@@ -97,7 +97,7 @@ export default function Home() {
         {/* 03 — Track Record (Projects) */}
         <div
           ref={projectsRef}
-          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0 overflow-hidden"
+          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-start md:px-[5%] md:pb-0 overflow-x-hidden"
         >
           <div className="w-full md:max-w-[40vw]">
             <ProjectsSection />
@@ -109,7 +109,7 @@ export default function Home() {
         {/* 04 — Telemetry (Open Source) */}
         <div
           ref={openSourceRef}
-          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0 overflow-hidden"
+          className="flex min-h-screen items-end justify-center px-4 pb-24 md:items-center md:justify-end md:px-[5%] md:pb-0 overflow-x-hidden"
         >
           <div className="w-full md:max-w-[40vw]">
             <OpenSourceSection />
