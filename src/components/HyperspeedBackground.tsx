@@ -8,17 +8,7 @@ const Hyperspeed = dynamic(() => import('./Hyperspeed'), { ssr: false });
 
 export default function HyperspeedBackground({ scrollSpeed = 0 }: { scrollSpeed?: number }) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        zIndex: 0,
-        pointerEvents: 'none',
-      }}
-    >
+    <div className="canvas-container">
       <Hyperspeed effectOptions={f1RedBullPreset} scrollSpeed={scrollSpeed} />
     </div>
   );

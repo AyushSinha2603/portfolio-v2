@@ -21,6 +21,23 @@
   --font-headline: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* Responsive animation variables for Framer Motion */
+  --slide-left-x: 0px;
+  --slide-right-x: 0px;
+  --slide-left-skew: 0deg;
+  --slide-right-skew: 0deg;
+  --slide-y: 50px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --slide-left-x: -150px;
+    --slide-right-x: 150px;
+    --slide-left-skew: -15deg;
+    --slide-right-skew: 15deg;
+    --slide-y: 0px;
+  }
 }
 
 @theme inline {
@@ -184,6 +201,12 @@ body {
   height: 100vh;
   z-index: 0;
   pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .canvas-container {
+    transform: translateY(-20vh); /* Push car UP on mobile so it isn't hidden by sections */
+  }
 }
 
 .canvas-container canvas {

@@ -55,8 +55,8 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="tech-stack">
       <motion.section 
-        initial={{ x: -150, opacity: 0, skewX: -15 }}
-        whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+        initial={{ x: 'var(--slide-left-x)', y: 'var(--slide-y)', opacity: 0, skewX: 'var(--slide-left-skew)' }}
+        whileInView={{ x: 0, y: 0, opacity: 1, skewX: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         viewport={{ once: false, amount: 0 }}
         className="glass-panel telemetry-grid relative mx-auto max-w-2xl p-5 md:p-8 max-h-[55vh] md:max-h-none overflow-y-auto md:overflow-visible scrollbar-hide"
