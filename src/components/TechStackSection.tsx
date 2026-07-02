@@ -28,7 +28,7 @@ function TechCardItem({ tech, index }: { tech: TechCard; index: number }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
+      transition={{ duration: 0.4, delay: 0.1 + index * 0.1 }}
       viewport={{ once: true, amount: 0.2 }}
       className="glass-card p-4 relative overflow-hidden group"
     >
@@ -55,7 +55,7 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="garage-section" id="tech-stack">
       <motion.section 
-        initial={{ x: -100, opacity: 0, skewX: -10 }}
+        initial={{ x: -150, opacity: 0, skewX: -15 }}
         whileInView={{ x: 0, opacity: 1, skewX: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         viewport={{ once: true, amount: 0.1 }}
@@ -94,7 +94,7 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
             </h3>
             <div className="flex flex-col gap-4">
               {backendStack.map((tech, i) => (
-                <TechCardItem key={tech.name} tech={tech} index={i} />
+                <TechCardItem key={tech.name} tech={tech} index={i + frontendStack.length} />
               ))}
             </div>
           </div>
