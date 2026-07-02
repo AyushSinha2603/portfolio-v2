@@ -32,6 +32,16 @@ export default function Home() {
   const openSourceRef  = useRef<HTMLDivElement>(null);
   const footerRef      = useRef<HTMLDivElement>(null);
 
+  // Force scroll to top on refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
 
