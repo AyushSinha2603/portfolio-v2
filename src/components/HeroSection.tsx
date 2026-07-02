@@ -166,7 +166,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
 
           {/* Central glassmorphic card */}
           <motion.div
-            initial={{ x: -150, opacity: 0, skewX: -15 }}
+            initial={{ x: 150, opacity: 0, skewX: 15 }}
             whileInView={{ x: 0, opacity: 1, skewX: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
             viewport={{ once: false, amount: 0.2 }}
