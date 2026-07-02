@@ -100,7 +100,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         transition: 'border-color 0.3s',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#c0c0c0', marginBottom: 6 }}>THROTTLE</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#FDD900', marginBottom: 6 }}>THROTTLE</div>
       <div
         style={{
           height: 2,
@@ -176,7 +176,7 @@ function SpeedBadge() {
         pointerEvents: 'none',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#c0c0c0', marginBottom: 4 }}>SPEED</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#E30118', marginBottom: 4 }}>SPEED</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
         <span style={{ fontSize: 24, fontWeight: 700, color: '#FDD900', lineHeight: 1 }}>
           {Math.round(speed)}
