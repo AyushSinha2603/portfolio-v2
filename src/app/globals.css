@@ -205,7 +205,14 @@ body {
 
 @media (max-width: 767px) {
   .canvas-container {
-    transform: translateY(-20vh); /* Push car UP on mobile so it isn't hidden by sections */
+    /* Reset transform since text is no longer at the bottom */
+    transform: none;
+  }
+  
+  /* Disable Framer Motion animations on mobile to stop the dashboard effect */
+  .mobile-no-animate {
+    transform: none !important;
+    opacity: 1 !important;
   }
 }
 
