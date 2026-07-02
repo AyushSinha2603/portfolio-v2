@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-import HeroSection from '@/components/HeroSection';
+import HeroSection, { ThrottleGauge } from '@/components/HeroSection';
 import TechStackSection from '@/components/TechStackSection';
 import ProjectsSection from '@/components/ProjectsSection';
 import OpenSourceSection from '@/components/OpenSourceSection';
@@ -74,6 +74,9 @@ export default function Home() {
     <>
       {/* ── Fixed racing background ─── */}
       <HyperspeedBackground scrollSpeed={scrollSpeed} />
+      
+      {/* ── Fixed Telemetry Overlay ─── */}
+      <ThrottleGauge scrollProgress={scrollProgress} />
 
       {/* ── Scroll container ─── */}
       <div

@@ -77,7 +77,7 @@ function LightsOut() {
 }
 
 // ─── Throttle Gauge (fixed bottom-right) ─────────────────────────────────────
-function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
+export function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
   const throttle = Math.round(scrollProgress * 100);
   const rpm = Math.round(3000 + scrollProgress * 9000);
   const isHot = throttle > 75;
@@ -87,11 +87,13 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
       initial={{ x: 150, opacity: 0, skewX: 15 }}
       animate={{ x: 0, opacity: 1, skewX: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }}
+      className="mobile-no-animate"
       style={{
         position: 'fixed',
         bottom: 24,
         right: 24,
         zIndex: 100,
+        transform: 'translateZ(0)',
         fontFamily: 'var(--font-mono, monospace)',
         background: 'rgba(6,6,10,0.85)',
         backdropFilter: 'blur(16px)',
@@ -144,8 +146,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
   ({ scrollProgress = 0 }, ref) => {
     return (
       <>
-        {/* Fixed telemetry overlays — rendered outside the scroll flow */}
-        <ThrottleGauge scrollProgress={scrollProgress} />
+        {/* ThrottleGauge has been moved to page.tsx to avoid transform containing block bugs */}
 
         <div ref={ref} id="hero" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
           {/* Huge watermark race number */}
