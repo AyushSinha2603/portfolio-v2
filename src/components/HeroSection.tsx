@@ -100,7 +100,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         transition: 'border-color 0.3s',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#FDD900', marginBottom: 6 }}>THROTTLE</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#ffffff', marginBottom: 6 }}>THROTTLE</div>
       <div
         style={{
           height: 2,
@@ -125,7 +125,7 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
         <span style={{ fontSize: 20, fontWeight: 700, color: isHot ? '#E30118' : '#FDD900', transition: 'color 0.3s' }}>
           {throttle}%
         </span>
-        <span style={{ fontSize: 9, color: '#c0c0c0' }}>{rpm.toLocaleString()} RPM</span>
+        <span style={{ fontSize: 9, color: '#ffffff' }}>{rpm.toLocaleString()} RPM</span>
       </div>
     </div>
   );
@@ -176,12 +176,12 @@ function SpeedBadge() {
         pointerEvents: 'none',
       }}
     >
-      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#E30118', marginBottom: 4 }}>SPEED</div>
+      <div style={{ fontSize: 9, letterSpacing: '0.18em', color: '#ffffff', marginBottom: 4 }}>SPEED</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
         <span style={{ fontSize: 24, fontWeight: 700, color: '#FDD900', lineHeight: 1 }}>
           {Math.round(speed)}
         </span>
-        <span style={{ fontSize: 9, color: '#c0c0c0' }}>km/h</span>
+        <span style={{ fontSize: 9, color: '#ffffff' }}>km/h</span>
       </div>
     </div>
   );

@@ -45,10 +45,10 @@ export const f1RedBullPreset: HyperspeedOptions = {
     road: 0x080808,
     island: 0x050505,
     sky: 0x000000,
-    leftStreaks:  [0xC0BFBF, 0xA0A0A0, 0xE0E0E0, 0x1E4176], // Silver & Navy
-    rightStreaks: [0x1E4176, 0x15305B, 0x0A1C40, 0xC0BFBF], // Navy & Silver
-    sideSticks: 0x1E4176, // Deep Navy
-    shoulderLine: 0x1E4176, // Deep Navy track lines
+    leftStreaks:  [0xE30118, 0xff1100, 0xcc0000, 0xff3300], // Racing Red
+    rightStreaks: [0xffffff, 0xE0E0E0, 0xC0BFBF, 0x888888], // Subtle White/Grey
+    sideSticks: 0xE30118, // Racing Red
+    shoulderLine: 0xffffff, // White track outer lines
   },
 };
 
@@ -189,11 +189,11 @@ class HyperspeedApp {
     this.scene.add(dirLight);
 
     // Neon Rim Lights to match the track
-    const leftRedLight = new THREE.PointLight(0xC0BFBF, 30, 20); // Silver
+    const leftRedLight = new THREE.PointLight(0xE30118, 50, 20); // Racing Red
     leftRedLight.position.set(-3, 1, -6);
     this.scene.add(leftRedLight);
 
-    const rightBlueLight = new THREE.PointLight(0x1E4176, 50, 20); // Deep Navy
+    const rightBlueLight = new THREE.PointLight(0xffffff, 30, 20); // White
     rightBlueLight.position.set(3, 1, -6);
     this.scene.add(rightBlueLight);
 
@@ -232,14 +232,14 @@ class HyperspeedApp {
              color: 0x020202,
            });
            
-           // 2. Add glowing neon edges on top of the geometry (Deep Navy Blueprint)
+           // 2. Add glowing neon edges on top of the geometry (Electric Blue to catch Bloom)
            const edges = new THREE.EdgesGeometry(child.geometry, 15);
            const lineNavy = new THREE.LineSegments(
              edges, 
              new THREE.LineBasicMaterial({ 
-               color: 0x0A1C40, // Deep, rich Navy (blueprint style, avoids blooming)
+               color: 0x00A3E0, // Vibrant Electric Cyan/Blue for the wireframe pop
                transparent: true,
-               opacity: 0.95
+               opacity: 1.0
              })
            );
            child.add(lineNavy);
@@ -321,7 +321,7 @@ class HyperspeedApp {
     for (let i = 0; i < dashCount; i++) {
       const d = new THREE.Mesh(
         new THREE.PlaneGeometry(0.1, dashLen, 1, 4).rotateX(-Math.PI / 2),
-        this.makeLaneMat(0xC0BFBF, 0.4) // Metallic Silver telemetry line
+        this.makeLaneMat(0xE30118, 0.6) // Racing Red telemetry line
       );
       d.position.set(0, 0.005, -i * (CHUNK_LEN / dashCount) - dashLen / 2 - CHUNK_LEN / dashCount / 4);
       group.add(d);
@@ -332,7 +332,7 @@ class HyperspeedApp {
     const curbSeg = 6;
     for (let i = 0; i < curbSeg; i++) {
       const cLen = CHUNK_LEN / curbSeg;
-      const cColor = i % 2 === 0 ? 0x1E4176 : 0x333333; // Deep Navy & Dark Grey
+      const cColor = i % 2 === 0 ? 0xE30118 : 0xdddddd; // Racing Red & White
       [-(roadWidth / 2 + curbW / 2), roadWidth / 2 + curbW / 2].forEach((cx) => {
         const cb = new THREE.Mesh(
           new THREE.PlaneGeometry(curbW, cLen * 0.9, 1, 4).rotateX(-Math.PI / 2),
