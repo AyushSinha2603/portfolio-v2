@@ -199,7 +199,7 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0;
+  z-index: -10;
   pointer-events: none;
 }
 
@@ -234,6 +234,6 @@ body {
 
 /* Ensure body fills full height with no scrollbar artifacts */
 html, body {
-  background: #000;
+  background: #06060a;
   overflow-x: hidden;
 }

@@ -68,7 +68,7 @@ export default function Home() {
       {/* ── Scroll container ─── */}
       <div
         ref={mainRef}
-        style={{ position: 'relative', zIndex: 10 }}
+        style={{ position: 'relative', zIndex: 10, transform: 'translateZ(0)' }}
       >
         {/* 01 — Starting Grid (Hero) */}
         <div
