@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
+import { motion } from 'framer-motion';
 
 interface TechCard {
   name: string;
@@ -21,9 +22,16 @@ const backendStack: TechCard[] = [
   { name: 'MongoDB', description: 'NoSQL document storage', proficiency: 80 },
 ];
 
-function TechCardItem({ tech }: { tech: TechCard }) {
+function TechCardItem({ tech, index }: { tech: TechCard; index: number }) {
+  const isEven = index % 2 === 0;
   return (
-    <div className="glass-card p-4 relative overflow-hidden group">
+    <motion.div
+      initial={{ x: isEven ? -100 : 100, opacity: 0, skewX: isEven ? -10 : 10 }}
+      whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: index * 0.05 }}
+      viewport={{ once: true, amount: 0.2 }}
+      className="glass-card p-4 relative overflow-hidden group"
+    >
       {/* Subtle hover gradient accent */}
       <div className="absolute inset-0 bg-gradient-to-r from-[rgba(220,0,0,0.03)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <h4 className="font-headline text-lg text-titanium">{tech.name}</h4>
@@ -39,7 +47,7 @@ function TechCardItem({ tech }: { tech: TechCard }) {
       <span className="font-mono mt-1 inline-block text-xs text-silver">
         {tech.proficiency}%
       </span>
-    </div>
+    </motion.div>
   );
 }
 
@@ -67,8 +75,8 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
               AERODYNAMICS // FRONTEND
             </h3>
             <div className="flex flex-col gap-4">
-              {frontendStack.map((tech) => (
-                <TechCardItem key={tech.name} tech={tech} />
+              {frontendStack.map((tech, i) => (
+                <TechCardItem key={tech.name} tech={tech} index={i} />
               ))}
             </div>
           </div>
@@ -79,8 +87,8 @@ const TechStackSection = forwardRef<HTMLDivElement>((_, ref) => {
               ENGINE &amp; TELEMETRY // BACKEND
             </h3>
             <div className="flex flex-col gap-4">
-              {backendStack.map((tech) => (
-                <TechCardItem key={tech.name} tech={tech} />
+              {backendStack.map((tech, i) => (
+                <TechCardItem key={tech.name} tech={tech} index={i} />
               ))}
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { forwardRef, useMemo } from 'react';
 import { GitBranch, Star, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Contribution {
   repo: string;
@@ -39,9 +40,16 @@ function RoleBadge({ role }: { role: 'Contributor' | 'Maintainer' }) {
   );
 }
 
-function ContributionCard({ contribution }: { contribution: Contribution }) {
+function ContributionCard({ contribution, index }: { contribution: Contribution; index: number }) {
+  const isEven = index % 2 === 0;
   return (
-    <div className="glass-card p-5 relative overflow-hidden group">
+    <motion.div
+      initial={{ x: isEven ? -100 : 100, opacity: 0, skewX: isEven ? -15 : 15 }}
+      whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: index * 0.1 }}
+      viewport={{ once: true, amount: 0.2 }}
+      className="glass-card p-5 relative overflow-hidden group"
+    >
       {/* Subtle hover gradient accent */}
       <div className="absolute inset-0 bg-gradient-to-r from-[rgba(34,197,94,0.03)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <div className="flex items-start justify-between gap-4">
@@ -63,7 +71,7 @@ function ContributionCard({ contribution }: { contribution: Contribution }) {
         <Star className="h-3.5 w-3.5 text-yellow-500" />
         <span className="font-mono text-xs text-silver">{contribution.stars}</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -133,8 +141,8 @@ const OpenSourceSection = forwardRef<HTMLDivElement>((_, ref) => {
 
         {/* Contribution cards */}
         <div className="flex flex-col gap-4">
-          {contributions.map((c) => (
-            <ContributionCard key={c.repo} contribution={c} />
+          {contributions.map((c, i) => (
+            <ContributionCard key={c.repo} contribution={c} index={i} />
           ))}
         </div>
 

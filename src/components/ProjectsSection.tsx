@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
+import { motion } from 'framer-motion';
 
 interface ProjectMetric {
   label: string;
@@ -89,9 +90,16 @@ function PositionBadge({ position }: { position: string }) {
   );
 }
 
-function ProjectCard({ project }: { project: Project }) {
+function ProjectCard({ project, index }: { project: Project; index: number }) {
+  const isEven = index % 2 === 0;
   return (
-    <div className="glass-card p-6 relative overflow-hidden group">
+    <motion.div
+      initial={{ x: isEven ? -100 : 100, opacity: 0, skewX: isEven ? -15 : 15 }}
+      whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: index * 0.1 }}
+      viewport={{ once: true, amount: 0.2 }}
+      className="glass-card p-6 relative overflow-hidden group"
+    >
       {/* Subtle hover gradient accent */}
       <div className="absolute inset-0 bg-gradient-to-br from-[rgba(27,20,100,0.03)] to-[rgba(220,0,0,0.03)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       <div className="flex items-start gap-4">
@@ -128,7 +136,7 @@ function ProjectCard({ project }: { project: Project }) {
           </span>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -150,8 +158,8 @@ const ProjectsSection = forwardRef<HTMLDivElement>((_, ref) => {
 
         {/* Project cards */}
         <div className="flex flex-col gap-6">
-          {projects.map((project) => (
-            <ProjectCard key={project.position} project={project} />
+          {projects.map((project, i) => (
+            <ProjectCard key={project.position} project={project} index={i} />
           ))}
         </div>
       </section>

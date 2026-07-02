@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // ─── F1 Lights-Out Sequence (purely decorative) ──────────────────────────────
 function LightsOut() {
@@ -82,7 +83,10 @@ function ThrottleGauge({ scrollProgress }: { scrollProgress: number }) {
   const isHot = throttle > 75;
 
   return (
-    <div
+    <motion.div
+      initial={{ x: 150, opacity: 0, skewX: 15 }}
+      animate={{ x: 0, opacity: 1, skewX: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25, delay: 0.1 }}
       style={{
         position: 'fixed',
         bottom: 24,
@@ -159,7 +163,10 @@ function SpeedBadge() {
   }, []);
 
   return (
-    <div
+    <motion.div
+      initial={{ x: -150, opacity: 0, skewX: -15 }}
+      animate={{ x: 0, opacity: 1, skewX: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       style={{
         position: 'fixed',
         bottom: 24,
@@ -183,7 +190,7 @@ function SpeedBadge() {
         </span>
         <span style={{ fontSize: 9, color: '#ffffff' }}>km/h</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -218,7 +225,11 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
           </div>
 
           {/* Central glassmorphic card */}
-          <div
+          <motion.div
+            initial={{ x: -150, opacity: 0, skewX: -15 }}
+            whileInView={{ x: 0, opacity: 1, skewX: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            viewport={{ once: true, amount: 0.2 }}
             className="max-h-[55vh] overflow-y-auto md:max-h-none md:overflow-visible scrollbar-hide"
             style={{
               position: 'relative',
@@ -329,7 +340,7 @@ const HeroSection = forwardRef<HTMLDivElement, HeroSectionProps>(
               <span style={{ color: '#222' }}>|</span>
               <span style={{ color: '#c0c0c0' }}>SEASON 2025</span>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </>
